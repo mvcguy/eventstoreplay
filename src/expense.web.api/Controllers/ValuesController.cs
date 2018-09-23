@@ -29,7 +29,7 @@ namespace expense.web.api.Controllers
             return new string[] { "value1", "value2" };
         }
 
-        // GET api/values/5
+        // GET api/values/17aeed42-3aa7-42a6-a01e-00de257dbb91/2
         [HttpGet("{id}/{version?}")]
         public IActionResult Get(Guid id, long? version = null)
         {
@@ -89,7 +89,7 @@ namespace expense.web.api.Controllers
 
         }
 
-        // PUT api/values/5
+        // PUT api/values/17aeed42-3aa7-42a6-a01e-00de257dbb91
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(Guid id, [FromBody] ValueViewModel vm)
         {
@@ -133,10 +133,5 @@ namespace expense.web.api.Controllers
         public void Delete(int id)
         {
         }
-    }
-
-    public class ValuesViewModel
-    {
-
     }
 }
