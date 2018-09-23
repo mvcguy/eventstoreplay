@@ -1,0 +1,19 @@
+Simple application to register expenses
+
+	Authenticate users/employees
+	Access control
+	Setup flow
+	Users can register expenses
+	User can send expenses for approval
+	Approver approves expenses
+		When approved, the expenses can be posted to ledger
+	
+	Approver can reject expenses
+		Approver comment
+		User modifies
+		Resend for approval
+		
+		
+		
+		
+	
