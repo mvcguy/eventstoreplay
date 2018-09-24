@@ -56,7 +56,7 @@ namespace expense.web.api
             });
 
             //read model
-            services.AddScoped<IMongoDatabase>(x =>
+            services.AddSingleton<IMongoDatabase>(x =>
             {
                 var connectionString = Configuration["MongoDB:MongoContext:ConnectionString"];
                 var databaseName = Configuration["MongoDB:MongoContext:DatabaseName"];
@@ -99,7 +99,8 @@ namespace expense.web.api
                 // we need a singleton connection
                 IEventStoreConnection connection = ConnectionHelper.Create(options.Value.Connection, provider.GetService<IEventStoreLogger>(), TcpType.Normal);
                 Microsoft.Extensions.Logging.ILogger<ValuesEventConsumer> logger = provider.GetService<Microsoft.Extensions.Logging.ILogger<ValuesEventConsumer>>();
-                var eventConsumer = new ValuesEventConsumer(options, logger, connection);
+                var repository = provider.GetService<IReadModelRepository<ValueRecord>>();
+                var eventConsumer = new ValuesEventConsumer(options, logger, repository, connection);
                 return eventConsumer;
             });
             return services;

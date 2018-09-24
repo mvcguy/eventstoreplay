@@ -12,10 +12,11 @@ namespace expense.web.api.Values.ReadModel
     {
         public IMongoCollection<TEntity> Collection { get; }
 
+        public IMongoDatabase Database { get; }
+
         public MongoDbReadModelRepository(IMongoDatabase database)
         {
-            if (database == null)
-                throw new ArgumentNullException(nameof(database));
+            Database = database ?? throw new ArgumentNullException(nameof(database));
 
             Collection = database.GetCollection<TEntity>(typeof(TEntity).Name);
         }
