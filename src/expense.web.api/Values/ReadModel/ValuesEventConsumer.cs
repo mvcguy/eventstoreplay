@@ -3,7 +3,7 @@ using System.Text;
 using expense.web.api.Values.Aggregate.Constants;
 using expense.web.api.Values.Aggregate.Events;
 using expense.web.eventstore.EventStoreDataContext;
-using expense.web.eventstore.EventSubscriber;
+using expense.web.eventstore.EventStoreSubscriber;
 using EventStore.ClientAPI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

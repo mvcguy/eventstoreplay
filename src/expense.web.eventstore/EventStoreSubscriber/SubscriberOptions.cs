@@ -1,4 +1,4 @@
-﻿namespace expense.web.eventstore.EventSubscriber
+﻿namespace expense.web.eventstore.EventStoreSubscriber
 {
     public class SubscriberOptions
     {

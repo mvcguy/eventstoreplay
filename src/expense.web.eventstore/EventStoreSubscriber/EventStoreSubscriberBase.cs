@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 
-namespace expense.web.eventstore.EventSubscriber
+namespace expense.web.eventstore.EventStoreSubscriber
 {
     public abstract class EventStoreSubscriberBase : IEventStoreSubscriber
     {
@@ -17,12 +17,7 @@ namespace expense.web.eventstore.EventSubscriber
         private readonly IEventStoreConnection _eventStoreConnection;
 
         public bool IsStarted { get; private set; }
-
-        public Action<object> ConnectedDef { get; set; }
-        public Action<object> DroppedDef { get; set; }
-
-        public Action<object> HandlerDef { get; set; }
-
+        
         protected EventStoreSubscriberBase(IOptions<SubscriberOptions> options, 
             ILogger logger, 
             IEventStoreConnection eventStoreConnection)
@@ -32,7 +27,7 @@ namespace expense.web.eventstore.EventSubscriber
             _eventStoreConnection = eventStoreConnection;
         }
 
-        public Task Start(long? checkpoint)
+        public virtual Task Start(long? checkpoint)
         {
             var task = Task.Run(() =>
             {
@@ -62,23 +57,18 @@ namespace expense.web.eventstore.EventSubscriber
             return task;
         }
 
-        private void Connected(EventStoreCatchUpSubscription eventStoreCatchUpSubscription)
+        protected virtual void Connected(EventStoreCatchUpSubscription eventStoreCatchUpSubscription)
         {
-           _logger.LogInformation($"[{DateTime.Now:G}] - Connected {Environment.NewLine} ");
-            ConnectedDef?.Invoke(new { streamId = eventStoreCatchUpSubscription.StreamId });
+           
         }
 
-        private void Dropped(EventStoreCatchUpSubscription eventStoreCatchUpSubscription, SubscriptionDropReason subscriptionDropReason, Exception exception)
+        protected virtual void Dropped(EventStoreCatchUpSubscription eventStoreCatchUpSubscription, SubscriptionDropReason subscriptionDropReason, Exception exception)
         {
-            _logger.LogInformation($"[{DateTime.Now:G}] - Dropped {Environment.NewLine} ");
-            DroppedDef?.Invoke(new { Exception = exception });
+           
         }
 
-        private Task HandleEvent(EventStoreCatchUpSubscription eventStoreCatchUpSubscription, ResolvedEvent resolvedEvent)
+        protected virtual Task HandleEvent(EventStoreCatchUpSubscription eventStoreCatchUpSubscription, ResolvedEvent resolvedEvent)
         {
-            // TO DO - we need to send also the checkpoint 
-            // ResolvedEvent.OriginalEventPosition - this is the position in the projection stream
-            // ResolvedEvent.Event.EventNumber is giving us the position in a AccountAggregated-GUID stream. AccountCreatedEvent will always be event number 0
             try
             {
                 OnEvent(new EventModel
@@ -103,7 +93,7 @@ namespace expense.web.eventstore.EventSubscriber
 
         protected virtual void OnEventException(Exception exception, ResolvedEvent resolvedEvent)
         {
-            _logger.LogError("Exception {0} thrown when handling event {1}", exception.Message, resolvedEvent);
+            
         }
     }
 }

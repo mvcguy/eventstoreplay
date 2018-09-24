@@ -2,7 +2,7 @@
 using expense.web.api.Values.Aggregate.Repository;
 using expense.web.api.Values.ReadModel;
 using expense.web.eventstore.EventStoreDataContext;
-using expense.web.eventstore.EventSubscriber;
+using expense.web.eventstore.EventStoreSubscriber;
 using expense.web.eventstore.StoreConnection;
 using EventStore.ClientAPI;
 using MediatR;
