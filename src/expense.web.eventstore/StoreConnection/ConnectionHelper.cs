@@ -18,7 +18,7 @@ namespace expense.web.eventstore.StoreConnection
         {
 
             var settings = ConnectionSettings.Create()
-                .UseCustomLogger(customerLogger)
+                //.UseCustomLogger(customerLogger)
                 .EnableVerboseLogging()
                 .LimitReconnectionsTo(10)
                 .LimitRetriesForOperationTo(100)

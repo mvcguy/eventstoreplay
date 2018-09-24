@@ -1,0 +1,30 @@
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using MongoDB.Driver;
+
+namespace expense.web.api.Values.ReadModel
+{
+    public interface IReadModelRepository<TEntity> where TEntity : class, IEntityBase, new()
+    {
+        IMongoCollection<TEntity> Collection { get; }
+
+        Task<bool> AddOrUpdateAsync(TEntity entity, CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default(CancellationToken));
+
+        Task AddManyAsync(IEnumerable<TEntity> entities,
+            CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<TEntity> GetByIdAsync(object id, CancellationToken cancellationToken = default(CancellationToken));
+
+        IQueryable<TEntity> GetAll();
+
+        Task<bool> RemoveByIdAsync(object id, CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<bool> RemoveEntityAsync(TEntity entity, CancellationToken cancellationToken = default(CancellationToken));
+    }
+}

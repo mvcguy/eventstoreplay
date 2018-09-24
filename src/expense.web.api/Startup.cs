@@ -12,8 +12,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using IEventStoreLogger = EventStore.ClientAPI.ILogger;
-using MsLogger = Microsoft.Extensions.Logging.ILogger;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+
 
 namespace expense.web.api
 {
@@ -52,6 +54,19 @@ namespace expense.web.api
                 connection.ConnectAsync().Wait();
                 return connection;
             });
+
+            //read model
+            services.AddScoped<IMongoDatabase>(x =>
+            {
+                var connectionString = Configuration["MongoDB:MongoContext:ConnectionString"];
+                var databaseName = Configuration["MongoDB:MongoContext:DatabaseName"];
+                var client = new MongoClient(connectionString);
+                var database = client.GetDatabase(databaseName);
+                return database;
+            });
+
+            services.AddScoped(typeof(IReadModelRepository<>), typeof(MongoDbReadModelRepository<>));
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -83,7 +98,7 @@ namespace expense.web.api
 
                 // we need a singleton connection
                 IEventStoreConnection connection = ConnectionHelper.Create(options.Value.Connection, provider.GetService<IEventStoreLogger>(), TcpType.Normal);
-                MsLogger logger = provider.GetService<MsLogger>();
+                Microsoft.Extensions.Logging.ILogger<ValuesEventConsumer> logger = provider.GetService<Microsoft.Extensions.Logging.ILogger<ValuesEventConsumer>>();
                 var eventConsumer = new ValuesEventConsumer(options, logger, connection);
                 return eventConsumer;
             });

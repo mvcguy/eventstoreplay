@@ -1,4 +1,5 @@
-﻿using expense.web.eventstore.EventStoreSubscriber;
+﻿using System.Threading.Tasks;
+using expense.web.eventstore.EventStoreSubscriber;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,12 +10,15 @@ namespace expense.web.api
     {
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
+            var webHost = CreateWebHostBuilder(args).Build();
+            StartSubscriber(webHost);
+            webHost.Run();
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
+        {
+            return WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();
+        }
 
         public static void StartSubscriber(IWebHost host)
         {
