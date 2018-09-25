@@ -45,4 +45,13 @@ namespace expense.web.api.Values.Aggregate.Events
             return _metaData;
         }
     }
+
+    public class EventMetaData
+    {
+        public string AggregateClrTypeHeader { get; set; }
+
+        public string EventClrTypeHeader { get; set; }
+
+        public Guid CommitIdHeader { get; set; }
+    }
 }

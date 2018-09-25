@@ -39,9 +39,6 @@ namespace expense.web.api
                 options.Connection = Configuration.GetSection("EventStore")["ConnectionString"];
             });
 
-
-            services.AddValuesEventConsumer();
-
             services.AddSingleton<IEventStoreLogger, EventStoreLogger>();
             services.AddTransient(typeof(StoreContext<,>));
             services.AddTransient<IValuesRepository, ValuesRepository>();
@@ -56,17 +53,25 @@ namespace expense.web.api
             });
 
             //read model
-            services.AddSingleton<IMongoDatabase>(x =>
+
+            services.AddSingleton<IMongoClient>(provider =>
             {
                 var connectionString = Configuration["MongoDB:MongoContext:ConnectionString"];
-                var databaseName = Configuration["MongoDB:MongoContext:DatabaseName"];
                 var client = new MongoClient(connectionString);
+                return client;
+            });
+
+            services.AddSingleton<IMongoDatabase>(provider =>
+            {
+                var client = provider.GetService<IMongoClient>();
+                var databaseName = Configuration["MongoDB:MongoContext:DatabaseName"];
                 var database = client.GetDatabase(databaseName);
                 return database;
             });
 
-            services.AddScoped(typeof(IReadModelRepository<>), typeof(MongoDbReadModelRepository<>));
+            services.AddSingleton(typeof(IReadModelRepository<>), typeof(MongoDbReadModelRepository<>));
 
+            services.AddValuesEventConsumer();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -99,8 +104,10 @@ namespace expense.web.api
                 // we need a singleton connection
                 IEventStoreConnection connection = ConnectionHelper.Create(options.Value.Connection, provider.GetService<IEventStoreLogger>(), TcpType.Normal);
                 Microsoft.Extensions.Logging.ILogger<ValuesEventConsumer> logger = provider.GetService<Microsoft.Extensions.Logging.ILogger<ValuesEventConsumer>>();
-                var repository = provider.GetService<IReadModelRepository<ValueRecord>>();
-                var eventConsumer = new ValuesEventConsumer(options, logger, repository, connection);
+                var valueRecordsRepository = provider.GetService<IReadModelRepository<ValueRecord>>();
+                var readPointerRepository = provider.GetService<IReadModelRepository<ReadPointer>>();
+                var dbClient = provider.GetService<IMongoClient>();
+                var eventConsumer = new ValuesEventConsumer(options, dbClient, logger, valueRecordsRepository, readPointerRepository, connection);
                 return eventConsumer;
             });
             return services;
