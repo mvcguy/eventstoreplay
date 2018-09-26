@@ -87,7 +87,9 @@ namespace expense.web.api
             }
 
             //app.UseHttpsRedirection();
+            app.UseCors(builder => { builder.WithOrigins().AllowAnyOrigin(); });
             app.UseMvc();
+            
         }
     }
 

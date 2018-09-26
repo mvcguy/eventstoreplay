@@ -56,7 +56,7 @@ namespace expense.web.eventstore.EventStoreSubscriber
 
             return task;
         }
-
+        
         protected virtual void Connected(EventStoreCatchUpSubscription eventStoreCatchUpSubscription)
         {
            

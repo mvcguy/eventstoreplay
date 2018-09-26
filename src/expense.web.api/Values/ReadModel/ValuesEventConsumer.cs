@@ -22,7 +22,7 @@ namespace expense.web.api.Values.ReadModel
         private readonly IReadModelRepository<ReadPointer> _readPointerRepistory;
         private ValueRecord _currentValueRecord;
         private DatabaseOperation _operation;
-        private ReadPointer _readPointer;
+        private readonly ReadPointer _readPointer;
 
         public ValuesEventConsumer(IOptions<SubscriberOptions> options,
             IMongoClient mongoClient,
@@ -39,6 +39,12 @@ namespace expense.web.api.Values.ReadModel
             // there must be atleast one recrod!!!
             _readPointer = _readPointerRepistory.GetAll()
                 .First(x => x.SourceName==options.Value.TopicName);
+        }
+
+        protected override void Connected(EventStoreCatchUpSubscription eventStoreCatchUpSubscription)
+        {
+            base.Connected(eventStoreCatchUpSubscription);
+            _logger.LogInformation("Listening to events from event store...");
         }
 
         public override void OnEvent(EventModel @event)
@@ -96,10 +102,12 @@ namespace expense.web.api.Values.ReadModel
                             break;
                     }
                     session.CommitTransaction();
+                    _logger.LogInformation($"Event {@event.EventType} is successfully handled and persisted to database");
 
                 }
                 catch (Exception e)
                 {
+                    _logger.LogError($"Error: Event {@event.EventType} cannot be handled.");
                     _logger.LogError(e.Message, e);
                     session.AbortTransaction();
                 }

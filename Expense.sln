@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "expense.web.api", "src\expe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "expense.web.eventstore", "src\expense.web.eventstore\expense.web.eventstore.csproj", "{305CB4C7-6F6E-43C7-ACFF-E95BBE992B94}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "expense.web.reactclient", "src\expense.web.reactclient\expense.web.reactclient.csproj", "{0A7155A7-F11E-4710-AB34-1940FF98F055}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,6 +27,10 @@ Global
 		{305CB4C7-6F6E-43C7-ACFF-E95BBE992B94}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{305CB4C7-6F6E-43C7-ACFF-E95BBE992B94}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{305CB4C7-6F6E-43C7-ACFF-E95BBE992B94}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A7155A7-F11E-4710-AB34-1940FF98F055}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A7155A7-F11E-4710-AB34-1940FF98F055}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A7155A7-F11E-4710-AB34-1940FF98F055}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A7155A7-F11E-4710-AB34-1940FF98F055}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -32,6 +38,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{B773C432-0D3C-4627-84C1-F425A848F6A4} = {B1301F24-4C04-4CF4-A015-5C7BAB513AA9}
 		{305CB4C7-6F6E-43C7-ACFF-E95BBE992B94} = {B1301F24-4C04-4CF4-A015-5C7BAB513AA9}
+		{0A7155A7-F11E-4710-AB34-1940FF98F055} = {B1301F24-4C04-4CF4-A015-5C7BAB513AA9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EA7CE834-45B8-4E6D-9D7A-E753D941821F}

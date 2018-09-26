@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using expense.web.api.Values.Aggregate.Repository;
 using expense.web.api.Values.Commands;
 using expense.web.api.Values.Dtos;
+using expense.web.api.Values.ReadModel;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,18 +17,20 @@ namespace expense.web.api.Controllers
     {
         private readonly IMediator _mediator;
         private readonly IValuesRepository _repository;
+        private readonly IReadModelRepository<ValueRecord> _readModelRepository;
 
-        public ValuesController(IMediator mediator, IValuesRepository repository)
+        public ValuesController(IMediator mediator, IValuesRepository repository, IReadModelRepository<ValueRecord> readModelRepository)
         {
             _mediator = mediator;
             _repository = repository;
+            _readModelRepository = readModelRepository;
         }
 
         // GET api/values
         [HttpGet]
-        public ActionResult<IEnumerable<string>> Get()
+        public async Task<IActionResult> Get()
         {
-            return new string[] { "value1", "value2" };
+            return Ok(await Task.Run(() => _readModelRepository.GetAll().ToList()));
         }
 
         // GET api/values/17aeed42-3aa7-42a6-a01e-00de257dbb91/2
