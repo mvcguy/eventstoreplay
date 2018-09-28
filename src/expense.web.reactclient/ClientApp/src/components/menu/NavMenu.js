@@ -20,9 +20,9 @@ const navmenu = props => (
                 <LinkContainer to={'/values-list'}>
                     <NavItem><Glyphicon glyph='education' /> Values List</NavItem>
                 </LinkContainer>
-                { /*<LinkContainer to={'/fetchdata'}>
-                    <NavItem><Glyphicon glyph='th-list' /> Fetch data</NavItem>
-                </LinkContainer>*/}
+                <LinkContainer to={'/create-value'}>
+                    <NavItem><Glyphicon glyph='pencil' /> Create value</NavItem>
+                </LinkContainer>
             </Nav>
         </Navbar.Collapse>
     </Navbar>
