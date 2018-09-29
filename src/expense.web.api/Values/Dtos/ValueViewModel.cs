@@ -1,34 +1,29 @@
 ﻿using System;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using expense.web.api.Values.Attributes;
 
 namespace expense.web.api.Values.Dtos
 {
     public class ValueViewModel
     {
-        public Guid Id { get; set; }
+        public Guid? Id { get; set; }
 
-        public DtoProp<int> TenantId { get; set; }
+        [ValueRequired()]
+        public DtoProp<int?> TenantId { get; set; }
 
+        [ValueMaxLength(6, ErrorMessage = "The length of {0} cannot be greater than {1} characters")]
+        [ValueMinLength(2, ErrorMessage = "The length of {0} cannot be less than {1} characters")]
         public DtoProp<string> Code { get; set; }
 
+        [ValueMaxLength(150, ErrorMessage = "The length of {0} cannot be greater than {1} characters")]
+        [ValueMinLength(2, ErrorMessage = "The length of {0} cannot be less than {1} characters")]
         public DtoProp<string> Name { get; set; }
 
+        [ValueMaxLength(250, ErrorMessage = "The length of {0} cannot be greater than {1} characters")]
+        [ValueMinLength(2, ErrorMessage = "The length of {0} cannot be less than {1} characters")]
         public DtoProp<string> Value { get; set; }
 
-        public DtoProp<long> Version { get; set; }
-    }
-
-    public class DtoProp<T>
-    {
-        public T Value { get; set; }
-
-        public DtoProp()
-        {
-            
-        }
-
-        public DtoProp(T value)
-        {
-            Value = value;
-        }
+        public DtoProp<long?> Version { get; set; }
     }
 }

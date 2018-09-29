@@ -1,25 +1,22 @@
 import React, { Component } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { actionCreators } from './../../store/Values';
+import ValidationSummary from './../validation-summary';
 
 class ValuesList extends Component {
   componentWillMount() {
-    // This method runs when the component is first added to the page   
-    this.props.requestLifeValues();
+    this.props.getValuesList();
   }
-
-//   componentWillReceiveProps(nextProps) {
-//     // This method runs when incoming props (e.g., route params) change
-//     this.props.requestLifeValues();
-//   }
 
   render() {
     return (
       <div>
-        <h1>Life Values</h1>
+        <h1>The Values of a successful life</h1>
         <p>This component demonstrates fetching data from the server and working with URL parameters.</p>
+        <div style={{ "display": this.props.hasError ? "block" : "none" }} >
+          <ValidationSummary errorState={this.props.errorState} />
+        </div>
         {renderValuesTable(this.props)}
       </div>
     );
@@ -38,12 +35,12 @@ function renderValuesTable(props) {
         </tr>
       </thead>
       <tbody>
-        {props.lifeValues.map(lifeValue =>
-          <tr key={lifeValue.id}>
-            <td>{lifeValue.tenantId}</td>
-            <td>{lifeValue.code}</td>
-            <td>{lifeValue.name}</td>
-            <td>{lifeValue.value}</td>
+        {props.valuesListResponse.map(item =>
+          <tr key={item.id}>
+            <td>{item.tenantId}</td>
+            <td>{item.code}</td>
+            <td>{item.name}</td>
+            <td>{item.value}</td>
           </tr>
         )}
       </tbody>

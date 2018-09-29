@@ -11,7 +11,7 @@ namespace expense.web.api.Values.Aggregate
     {
 
         // Notes:
-        // 1. When we construct the aggregate, we dont wanna publish event for each property changes, rather an event called 'ValueCreatedEvent' is fired containing all required props
+        // 1. When we construct the aggregate, we don't wanna publish event for each property changes, rather an event called 'ValueCreatedEvent' is fired containing all required props
         // 2. We want to publish individual events for each property change. e.g., NameChangedEvent if the value of the ValueAggregate is changed.
 
         private readonly IValuesRepository _repository;
@@ -55,7 +55,7 @@ namespace expense.web.api.Values.Aggregate
         public void CreateValue(IValueAggregateModel model)
         {
             // Note: We want to modify the props using there methods, to keep the business logic in one place
-            // Also we dont want to fire individual prop changed events when an aggregate is created first time
+            // Also we don't want to fire individual prop changed events when an aggregate is created first time
             // Only one event called ValueCreated will be fired/applied
 
             ChangeTenantId(model.TenantId);
@@ -68,7 +68,7 @@ namespace expense.web.api.Values.Aggregate
 
         public void ChangeTenantId(int tenantId)
         {
-            // Note: We dont allow tenantId to be changed, except for when an aggregate is created first time or 
+            // Note: We don't allow tenantId to be changed, except for when an aggregate is created first time or 
             // Reconstructed from events (Replay events)
             ThrowIfNullOrNegative(tenantId);
             this.TenantId = tenantId;

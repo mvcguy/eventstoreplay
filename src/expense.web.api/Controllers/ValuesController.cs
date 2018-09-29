@@ -43,11 +43,11 @@ namespace expense.web.api.Controllers
             var vm = new ValueViewModel()
             {
                 Id = aggregate.Id,
-                TenantId = new DtoProp<int>(aggregate.TenantId),
+                TenantId = new DtoProp<int?>(aggregate.TenantId),
                 Name = new DtoProp<string>(aggregate.Name),
                 Code = new DtoProp<string>(aggregate.Code),
                 Value = new DtoProp<string>(aggregate.Value),
-                Version = new DtoProp<long>(aggregate.Version)
+                Version = new DtoProp<long?>(aggregate.Version)
             };
 
             return Ok(vm);
@@ -57,6 +57,9 @@ namespace expense.web.api.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] ValueViewModel request)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var createCommand = new CreateValueCommand
             {
                 Request = new ValueCommandRequest()
@@ -77,11 +80,11 @@ namespace expense.web.api.Controllers
                 var vm = new ValueViewModel()
                 {
                     Id = aggregate.Id,
-                    TenantId = new DtoProp<int>(aggregate.TenantId),
+                    TenantId = new DtoProp<int?>(aggregate.TenantId),
                     Name = new DtoProp<string>(aggregate.Name),
                     Code = new DtoProp<string>(aggregate.Code),
                     Value = new DtoProp<string>(aggregate.Value),
-                    Version = new DtoProp<long>(aggregate.Version)
+                    Version = new DtoProp<long?>(aggregate.Version)
                 };
                 return Created($"~/api/values/{vm.Id}", vm);
             }
@@ -95,19 +98,23 @@ namespace expense.web.api.Controllers
 
         // PUT api/values/17aeed42-3aa7-42a6-a01e-00de257dbb91
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(Guid id, [FromBody] ValueViewModel vm)
+        public async Task<IActionResult> Put(Guid? id, [FromBody] ValueViewModel vm)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            if (id == Guid.Empty || vm == null || vm.Version == null || vm.Version.Value == default(long))
+            if (!id.HasValue || id == Guid.Empty || vm == null || vm.Version == null || vm.Version.Value.GetValueOrDefault() == default(long))
                 return BadRequest(vm);
 
             var updateCommand = new UpdateValueCommand
             {
-                Id = id,
-                Version = vm.Version.Value,
+                Id = id.GetValueOrDefault(),
+                Version = vm.Version.Value.GetValueOrDefault(),
                 UpdateNameCmd = vm.Name != null ? new UpdateNameChildCmd(vm.Name.Value) : null,
                 UpdateValueCmd = vm.Value != null ? new UpdateValueChildCmd(vm.Value.Value) : null,
-                UpdateCodeCmd = vm.Code != null ? new UpdateCodeChildCmd(vm.Code.Value) : null,
+                // NOTE: Let the user not modify the code directly, 
+                // TODO: We should provide an alternative way to modify the value code
+                //UpdateCodeCmd = vm.Code != null ? new UpdateCodeChildCmd(vm.Code.Value) : null,
             };
 
             var result = await _mediator.Send(updateCommand);
@@ -118,11 +125,11 @@ namespace expense.web.api.Controllers
                 var updatedVm = new ValueViewModel()
                 {
                     Id = aggregate.Id,
-                    TenantId = new DtoProp<int>(aggregate.TenantId),
+                    TenantId = new DtoProp<int?>(aggregate.TenantId),
                     Name = new DtoProp<string>(aggregate.Name),
                     Code = new DtoProp<string>(aggregate.Code),
                     Value = new DtoProp<string>(aggregate.Value),
-                    Version = new DtoProp<long>(aggregate.Version)
+                    Version = new DtoProp<long?>(aggregate.Version)
                 };
                 return Ok(updatedVm);
             }

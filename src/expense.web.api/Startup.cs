@@ -77,6 +77,14 @@ namespace expense.web.api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            app.UseCors(builder =>
+            {
+                builder.AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+
+            });
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -87,9 +95,9 @@ namespace expense.web.api
             }
 
             //app.UseHttpsRedirection();
-            app.UseCors(builder => { builder.WithOrigins().AllowAnyOrigin(); });
+
             app.UseMvc();
-            
+
         }
     }
 

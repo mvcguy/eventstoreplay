@@ -1,6 +1,13 @@
+//NOTE: this component can add and also update an existing record
+
 import React, { Component } from 'react'
-import { Form, FormGroup, FormControl, Button, Col, ControlLabel } from 'react-bootstrap';
+import { Form, FormGroup, FormControl, Button, Col, ControlLabel, Alert } from 'react-bootstrap';
 import { Messages, Constants } from './../../messages'
+
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+import { actionCreators } from './../../store/Values';
+import ValidationSummary from '../validation-summary';
 
 class CreateValue extends Component {
     constructor(props, context) {
@@ -10,12 +17,18 @@ class CreateValue extends Component {
         this.handleCodeChange = this.handleCodeChange.bind(this);
         this.handleNameChange = this.handleNameChange.bind(this);
         this.handleValueChange = this.handleValueChange.bind(this);
+        this.handleSaveValue = this.handleSaveValue.bind(this);
+
         this.state = {
             tenantId: '',
             code: '',
             name: '',
-            value: ''
+            value: '',
+            id: null,
+            version: null,
+            persistSuccessClass: "hide"
         };
+
         this.state[Constants.VALIDATION_STATE_KEY] = {};
     }
 
@@ -35,7 +48,7 @@ class CreateValue extends Component {
         return this.state.validationState[Constants.TENANT_ID_FIELD_KEY] === Constants.SUCCESS &&
             this.state.validationState[Constants.CODE_FIELD_KEY] === Constants.SUCCESS &&
             this.state.validationState[Constants.NAME_FIELD_KEY] === Constants.SUCCESS &&
-            this.state.validationState[Constants.VALUE_FIELD_KEY] === Constants.SUCCESS;        
+            this.state.validationState[Constants.VALUE_FIELD_KEY] === Constants.SUCCESS;
     }
 
     handleTenantIDChange(event) {
@@ -72,10 +85,41 @@ class CreateValue extends Component {
         this.setState(newState);
     }
 
+    handleSaveValue() {
+        this.props.createValue(this.state);
+    }
+
+    componentWillReceiveProps(props) {
+
+        var newState = {};
+
+        if (props.createValueResponse && props.createValueResponse.version)
+            newState = { id: props.createValueResponse.id, version: props.createValueResponse.version.value }
+
+        // show/hide success message
+        var cls = "hide";
+        if (props.isLoading !== true && props.recordPersisted === true) {
+            cls = "show";
+        }
+
+        newState = { ...newState, persistSuccessClass: cls }
+        this.setState(newState);
+
+    }
+
+
     render() {
         return (
             <Form horizontal>
                 <h2>Create a new value</h2>
+                <div style={{ "display": this.props.hasError ? "block" : "none" }} >
+                    <ValidationSummary errorState={this.props.errorState} />
+                </div>
+
+                <Alert bsStyle="success" className={this.state.persistSuccessClass}>
+                    Record is persister successfully
+                </Alert>
+
                 <FormGroup
                     validationState={this.state.validationState[Constants.TENANT_ID_FIELD_KEY]}
                     controlId="tenantID">
@@ -84,6 +128,7 @@ class CreateValue extends Component {
                     </Col>
                     <Col sm={10}>
                         <FormControl
+                            readOnly={this.props.createValueResponse.id}
                             onChange={this.handleTenantIDChange}
                             value={this.state.tenantId}
                             type="number" placeholder={Constants.TENANT_ID_FIELD_LABEL} />
@@ -102,6 +147,7 @@ class CreateValue extends Component {
                     </Col>
                     <Col sm={10}>
                         <FormControl
+                            readOnly={this.props.createValueResponse.id}
                             onChange={this.handleCodeChange}
                             value={this.state.code}
                             type="text" placeholder={Constants.CODE_FIELD_LABEL} />
@@ -148,18 +194,21 @@ class CreateValue extends Component {
 
                 <FormGroup>
                     <Col smOffset={2} xs={10}>
-                        <Button className={this.canSave() ? "" : "disabled"} type="button" id="submit" bsStyle="primary">Save</Button>
+                        <Button
+                            onClick={!this.props.isLoading ? this.handleSaveValue : (e) => {/*request in progress*/ }}
+                            disabled={this.canSave() && !this.props.isLoading ? false : true}
+                            type="button" id="submit" bsStyle="primary">Save</Button>
                         <span style={{ margin: '4px' }}></span>
                         <Button type="button" id="cancel" bsStyle="warning">Cancel</Button>
-
                     </Col>
-
                     <Col xs={1}>
-
                     </Col>
                 </FormGroup>
             </Form >);
     }
 }
 
-export default CreateValue
+export default connect(
+    state => state.lifeValues,
+    dispatch => bindActionCreators(actionCreators, dispatch)
+)(CreateValue);
