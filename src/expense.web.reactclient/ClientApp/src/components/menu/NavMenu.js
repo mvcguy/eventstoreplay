@@ -4,7 +4,7 @@ import { Glyphicon, Nav, Navbar, NavItem } from 'react-bootstrap';
 import { LinkContainer } from 'react-router-bootstrap';
 import './NavMenu.css';
 
-const navmenu = props => (
+const navmenu = props => (    
     <Navbar inverse fixedTop fluid collapseOnSelect>
         <Navbar.Header>
             <Navbar.Brand>
@@ -19,9 +19,6 @@ const navmenu = props => (
                 </LinkContainer>
                 <LinkContainer to={'/values-list'}>
                     <NavItem><Glyphicon glyph='education' /> Values List</NavItem>
-                </LinkContainer>
-                <LinkContainer to={'/create-value'}>
-                    <NavItem><Glyphicon glyph='pencil' /> Create value</NavItem>
                 </LinkContainer>
             </Nav>
         </Navbar.Collapse>

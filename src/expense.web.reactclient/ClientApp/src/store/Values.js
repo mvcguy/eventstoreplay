@@ -1,10 +1,17 @@
 const requestValuesType = 'REQUEST_VALUES';
 const receiveValuesType = 'RECEIVE_VALUES';
-const receiveValuesErrorType = 'RECEIVE_VALUES_ERROR'
+const receiveValuesErrorType = 'RECEIVE_VALUES_ERROR';
+
+const requestValueByIdType = 'REQUEST_VALUE_BY_ID';
+const receiveValueByIdType = 'RECEIVE_VALUE_BY_ID';
+const receiveValueByIdErrorType = 'RECEIVE_VALUE_BY_ID_ERROR';
 
 const requestCreateValueType = 'REQUEST_CREATE_VALUE';
 const receiveCreateValueType = 'RECEIVE_CREATE_VALUE';
-const receiveCreateValueErrorType = 'RECEIVE_CREATE_VALUE_ERROR'
+const receiveCreateValueErrorType = 'RECEIVE_CREATE_VALUE_ERROR';
+
+const cancelChangeType = 'CANCEL_CHANGES';
+const addNewRecordType = 'ADD_NEW_RECORD';
 
 const initialState = {
     valuesList: [],
@@ -79,7 +86,7 @@ export const actionCreators = {
     // NOTE: The action can create a record, but also can modify an existing record
     addOrUpdateValueRecord: (request) => async (dispatch, getState) => {
 
-        dispatch({ type: requestCreateValueType, hasError: false });
+        dispatch({ type: requestCreateValueType, hasError: false, valueRecord: request });
 
         var newUrl = request.id ? url + `/${request.id}` : url;
         var method = request.id ? 'PUT' : 'POST';
@@ -98,13 +105,14 @@ export const actionCreators = {
                     type: receiveCreateValueType,
                     valueRecord: toUiModel(json),
                     hasError: false,
+                    recordPersisted: true,
                     errorState: {}
                 })
             }
-            else if (createValueResponse.ok === false && createValueResponse.status === 400) {
+            else {
                 dispatch({
                     type: receiveCreateValueErrorType,
-                    valueRecord: {},
+                    valueRecord: request,
                     hasError: true,
                     errorState: json
                 })
@@ -112,41 +120,90 @@ export const actionCreators = {
         }).catch((errorResponse) => {
             dispatch({
                 type: receiveCreateValueErrorType,
-                valueRecord: {},
+                valueRecord: request,
                 hasError: true,
                 errorState: { "Error": ["An unexpected error occurred while processing your request, please try again later!"] }
             });
         });
+    },
+
+    getValueById: function (id) {
+        var action = async function (dispatch, getState) {
+            dispatch({ type: requestValueByIdType, hasError: false, valueRecord: initialState.valueRecord });
+
+            fetch(url + `/${id}`).then(async (response) => {
+                var result = await response.json();
+                if (response.ok === true) {
+                    dispatch({
+                        type: receiveValueByIdType,
+                        valueRecord: toUiModel(result),
+                        hasError: false,
+                        errorState: {}
+                    });
+                }
+                else {
+                    dispatch({
+                        type: receiveValueByIdErrorType,
+                        valueRecord: initialState.valueRecord,
+                        hasError: true,
+                        errorState: result
+                    })
+                }
+
+            }).catch((error) => {
+                dispatch({
+                    type: receiveValueByIdErrorType,
+                    valueRecord: {},
+                    hasError: true,
+                    errorState: { "Error": ["An unexpected error occurred while processing your request, please try again later!"] }
+                })
+            });
+        };
+
+        return action;
+    },
+    cancelChanges: function () {
+        var action = async function (dispatch, getState) {
+            dispatch({ type: cancelChangeType, ...initialState });
+        };
+
+        return action;
+    },
+    addNewRecord: function () {
+        var action = async function (dispatch, getState) {
+            dispatch({ type: addNewRecordType, ...initialState });
+        };
+
+        return action;
     }
+
 };
 
-export const reducer = (state, action) => {
+export const reducer = (state = initialState, action) => {
 
     var newState = { ...state, ...action };
 
     switch (action.type) {
         case requestValuesType:
+        case requestCreateValueType:
+        case requestValueByIdType:
             newState.isLoading = true;
+            newState.recordPersisted = false;
             break;
         case receiveValuesType:
-            newState.isLoading = false;
-            break;
         case receiveValuesErrorType:
-            newState.isLoading = false;
-            break;
-        case requestCreateValueType:
-            newState.isLoading = true;
-            break;
         case receiveCreateValueType:
-            newState.isLoading = false;
-            newState.recordPersisted = true;
-            break;
         case receiveCreateValueErrorType:
+        case receiveValueByIdType:
+        case receiveValueByIdErrorType:
+        case cancelChangeType:
+        case addNewRecordType:
             newState.isLoading = false;
             break;
         default:
-            newState = { ...initialState, state };
+            newState = { ...state };
             break;
     }
+    console.log('reducer', action.type, newState);
     return newState;
 };

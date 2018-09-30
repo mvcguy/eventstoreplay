@@ -26,7 +26,7 @@ namespace expense.web.api.Values.Aggregate.Repository
         public ValuesAggregate GetById(Guid id, long version)
         {
             var temp = version;
-            if (temp < 0)
+            if (temp <= 0)
             {
                 temp = int.MaxValue;
             }

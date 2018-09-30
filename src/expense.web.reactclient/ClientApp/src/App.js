@@ -9,7 +9,7 @@ const layout = () => (
     <Layout>
         <Route exact path='/' component={Home} />
         <Route path='/values-list' component={ValuesList} />
-        <Route path='/create-value' component={ManageValueRecord} />
+        <Route path='/manage-value-record/:recordId?' component={ManageValueRecord} />
     </Layout>
 );
 

@@ -17,6 +17,7 @@ class ManageValueRecord extends Component {
         this.updateValueRecordState = this.updateValueRecordState.bind(this);
         this.handleSaveValue = this.handleSaveValue.bind(this);
         this.getSuccessClassName = this.getSuccessClassName.bind(this);
+        this.cancelChanges = this.cancelChanges.bind(this);
 
         this.state = {
             valueRecord: Object.assign({}, props.valueRecord),
@@ -24,15 +25,15 @@ class ManageValueRecord extends Component {
             hasError: props.hasError,
             errorState: props.errorState,
             recordPersisted: props.recordPersisted,
+            validationState: {},
+            isDirty: false,
         };
-        this.state[Constants.VALIDATION_STATE_KEY] = {};
-
     }
 
     // validates the minimum length of the field
     getValidationState(property, length) {
 
-        var newValidationState = { ...this.state[Constants.VALIDATION_STATE_KEY] };
+        var newValidationState = { ...this.state.validationState };
         newValidationState[property] = length < 2 ? Constants.ERROR : Constants.SUCCESS;
         return newValidationState;
     }
@@ -52,12 +53,11 @@ class ManageValueRecord extends Component {
     updateValueRecordState(event) {
         const field = event.target.name;
         let valueRecord = this.state.valueRecord;
-        let validationState = this.state[Constants.VALIDATION_STATE_KEY];
 
         valueRecord[field] = event.target.value;
-        validationState = this.getValidationState(field, event.target.value.length)
+        let validationState = this.getValidationState(field, event.target.value.length)
 
-        this.setState({ valueRecord: valueRecord, validationState: validationState });
+        this.setState({ valueRecord: valueRecord, validationState: validationState, isDirty: true, });
     }
 
     handleSaveValue() {
@@ -66,23 +66,30 @@ class ManageValueRecord extends Component {
 
     componentWillReceiveProps(newProps) {
         console.log('componentWillReceiveProps', newProps);
-        // Update the status of the current record only if its persisted successfully!
-        // only update the ID and the version!!!
-        var recordCopy = { ...this.state.valueRecord };
 
-        if (newProps.recordPersisted === true && newProps.isLoading === false && newProps.hasError === false) {
-            recordCopy.id = newProps.valueRecord.id;
-            recordCopy.version = newProps.valueRecord.version;
+        var newState = {
+            valueRecord: Object.assign({}, newProps.valueRecord),
+            isLoading: newProps.isLoading,
+            hasError: newProps.hasError,
+            errorState: newProps.errorState,
+            recordPersisted: newProps.recordPersisted,
+        };
 
-            this.setState({ valueRecord: recordCopy });
-        }
+        this.setState({
+            valueRecord: newState.valueRecord,
+            isLoading: newState.isLoading,
+            hasError: newState.hasError,
+            errorState: newState.errorState,
+            recordPersisted: newState.recordPersisted,
+        });
     }
 
     shouldBlockNavigation() {
-        return !this.props.recordPersisted === true && this.props.isLoading === true;
+        return !this.props.recordPersisted === true && this.props.isLoading === true || this.state.isDirty;
     }
 
     componentDidUpdate() {
+        console.log('componentdidupdate');
         if (this.shouldBlockNavigation()) {
             window.onbeforeunload = () => true
         } else {
@@ -99,10 +106,22 @@ class ManageValueRecord extends Component {
         return className;
     }
 
+    componentWillMount() {
+        // when we are redirected with an id, fetch that record
+        console.log('componentwillmount')
+        if (this.props.paramsRecordId) {
+            this.props.getValueById(this.props.paramsRecordId);
+        }
+    }
+
+    cancelChanges(e) {
+        this.props.history.push('/values-list');
+    }
+
     render() {
         return (
             <Form horizontal>
-                <h2>Create a new value</h2>
+                <h2>Create/update a value record</h2>
                 <div style={{ "display": this.props.hasError ? "block" : "none" }} >
                     <ValidationSummary errorState={this.props.errorState} />
                 </div>
@@ -199,7 +218,9 @@ class ManageValueRecord extends Component {
                             disabled={this.canSave() && !this.props.isLoading ? false : true}
                             type="button" id="submit" bsStyle="primary">Save</Button>
                         <span style={{ margin: '4px' }}></span>
-                        <Button type="button" id="cancel" bsStyle="warning">Cancel</Button>
+                        <Button
+                            onClick={this.cancelChanges}
+                            type="button" id="cancel" bsStyle="default">Back to list</Button>
                     </Col>
                     <Col xs={1}>
                     </Col>
@@ -211,13 +232,17 @@ class ManageValueRecord extends Component {
 function mapStateToProps(state, ownProps) {
 
     var lifeValuesStore = state.lifeValues;
-    console.log('mapStateToProps', lifeValuesStore);
+    console.log('mapStateToProps');
+
+    var paramsRecordId = ownProps.match.params.recordId;
+
     return {
         isLoading: lifeValuesStore.isLoading,
         valueRecord: lifeValuesStore.valueRecord,
         hasError: lifeValuesStore.hasError,
         errorState: lifeValuesStore.errorState,
-        recordPersisted: lifeValuesStore.recordPersisted
+        recordPersisted: lifeValuesStore.recordPersisted,
+        paramsRecordId: paramsRecordId
     }
 }
 
