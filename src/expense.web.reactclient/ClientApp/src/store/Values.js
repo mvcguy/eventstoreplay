@@ -7,17 +7,50 @@ const receiveCreateValueType = 'RECEIVE_CREATE_VALUE';
 const receiveCreateValueErrorType = 'RECEIVE_CREATE_VALUE_ERROR'
 
 const initialState = {
-    valuesListResponse: [],
+    valuesList: [],
     // TODO: Create unique flags/states for each action, 
     // otherwise it will be overwritten by another request
     isLoading: false,
-    createValueResponse: {},
+    valueRecord: {
+        id: null,
+        version: null,
+        tenantId: '',
+        code: '',
+        name: '',
+        value: ''
+    },
     hasError: false,
     errorState: {},
-    action: '',
     recordPersisted: false,
 };
-const url = 'http://localhost:50178/api/values';
+// const url = 'http://localhost:50178/api/values';
+const url = 'http://localhost:5000/api/values';
+
+function toServerModel(uiModel) {
+    var model = {
+        tenantId: { value: uiModel.tenantId },
+        code: { value: uiModel.code },
+        name: { value: uiModel.name },
+        value: { value: uiModel.value },
+        id: uiModel.id ? uiModel.id : '',
+        version: { value: uiModel.version }
+    };
+
+    return model;
+}
+
+function toUiModel(serverModel) {
+    var model = {
+        id: serverModel.id,
+        version: serverModel.version != null ? serverModel.version.value : null,
+        tenantId: serverModel.tenantId != null ? serverModel.tenantId.value : null,
+        code: serverModel.code != null ? serverModel.code.value : null,
+        name: serverModel.name != null ? serverModel.name.value : null,
+        value: serverModel.value != null ? serverModel.value.value : null,
+    };
+
+    return model;
+}
 
 export const actionCreators = {
     getValuesList: () => async (dispatch, getState) => {
@@ -25,17 +58,17 @@ export const actionCreators = {
         dispatch({ type: requestValuesType, hasError: false });
 
         fetch(url).then(async (response) => {
-
+            var list = await response.json();
             dispatch({
                 type: receiveValuesType,
-                valuesListResponse: await response.json(),
+                valuesList: list.map((item) => toUiModel(item)),
                 hasError: false,
                 errorState: {}
             });
         }).catch((error) => {
             dispatch({
                 type: receiveValuesErrorType,
-                valuesListResponse: [],
+                valuesList: [],
                 hasError: true,
                 errorState: { "Error": ["An unexpected error occurred while processing your request, please try again later!"] }
             })
@@ -43,29 +76,10 @@ export const actionCreators = {
 
     },
 
-    // NOTE: The create value can create a record, but also can modify an existing record
-    createValue: (request) => async (dispatch, getState) => {
-        console.log(request);
-        dispatch({ type: requestCreateValueType, hasError: false });
+    // NOTE: The action can create a record, but also can modify an existing record
+    addOrUpdateValueRecord: (request) => async (dispatch, getState) => {
 
-        var model = {
-            tenantId: {
-                value: request.tenantId
-            },
-            code: {
-                value: request.code
-            },
-            name: {
-                value: request.name
-            },
-            value: {
-                value: request.value
-            },
-            id: request.id ? request.id : '',
-            version: {
-                value: request.version
-            }
-        };
+        dispatch({ type: requestCreateValueType, hasError: false });
 
         var newUrl = request.id ? url + `/${request.id}` : url;
         var method = request.id ? 'PUT' : 'POST';
@@ -75,14 +89,14 @@ export const actionCreators = {
             headers: {
                 "Content-Type": "application/json; charset=utf-8",
             },
-            body: JSON.stringify(model)
+            body: JSON.stringify(toServerModel(request))
 
         }).then(async (createValueResponse) => {
             var json = await createValueResponse.json();
             if (createValueResponse.ok === true) {
                 dispatch({
                     type: receiveCreateValueType,
-                    createValueResponse: json,
+                    valueRecord: toUiModel(json),
                     hasError: false,
                     errorState: {}
                 })
@@ -90,7 +104,7 @@ export const actionCreators = {
             else if (createValueResponse.ok === false && createValueResponse.status === 400) {
                 dispatch({
                     type: receiveCreateValueErrorType,
-                    createValueResponse: {},
+                    valueRecord: {},
                     hasError: true,
                     errorState: json
                 })
@@ -98,7 +112,7 @@ export const actionCreators = {
         }).catch((errorResponse) => {
             dispatch({
                 type: receiveCreateValueErrorType,
-                createValueResponse: {},
+                valueRecord: {},
                 hasError: true,
                 errorState: { "Error": ["An unexpected error occurred while processing your request, please try again later!"] }
             });
@@ -131,7 +145,7 @@ export const reducer = (state, action) => {
             newState.isLoading = false;
             break;
         default:
-            newState = state || initialState;
+            newState = { ...initialState, state };
             break;
     }
     return newState;

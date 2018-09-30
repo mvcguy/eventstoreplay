@@ -1,35 +1,32 @@
 //NOTE: this component can add and also update an existing record
 
 import React, { Component } from 'react'
+import { Prompt } from 'react-router';
 import { Form, FormGroup, FormControl, Button, Col, ControlLabel, Alert } from 'react-bootstrap';
-import { Messages, Constants } from './../../messages'
+import { Messages, Constants } from '../../messages'
 
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import { actionCreators } from './../../store/Values';
+import { actionCreators } from '../../store/Values';
 import ValidationSummary from '../validation-summary';
 
-class CreateValue extends Component {
+class ManageValueRecord extends Component {
     constructor(props, context) {
         super(props, context);
-
-        this.handleTenantIDChange = this.handleTenantIDChange.bind(this);
-        this.handleCodeChange = this.handleCodeChange.bind(this);
-        this.handleNameChange = this.handleNameChange.bind(this);
-        this.handleValueChange = this.handleValueChange.bind(this);
+        console.log('constructor');
+        this.updateValueRecordState = this.updateValueRecordState.bind(this);
         this.handleSaveValue = this.handleSaveValue.bind(this);
+        this.getSuccessClassName = this.getSuccessClassName.bind(this);
 
         this.state = {
-            tenantId: '',
-            code: '',
-            name: '',
-            value: '',
-            id: null,
-            version: null,
-            persistSuccessClass: "hide"
+            valueRecord: Object.assign({}, props.valueRecord),
+            isLoading: props.isLoading,
+            hasError: props.hasError,
+            errorState: props.errorState,
+            recordPersisted: props.recordPersisted,
         };
-
         this.state[Constants.VALIDATION_STATE_KEY] = {};
+
     }
 
     // validates the minimum length of the field
@@ -45,68 +42,62 @@ class CreateValue extends Component {
     }
 
     canSave() {
+        return true;
         return this.state.validationState[Constants.TENANT_ID_FIELD_KEY] === Constants.SUCCESS &&
             this.state.validationState[Constants.CODE_FIELD_KEY] === Constants.SUCCESS &&
             this.state.validationState[Constants.NAME_FIELD_KEY] === Constants.SUCCESS &&
             this.state.validationState[Constants.VALUE_FIELD_KEY] === Constants.SUCCESS;
     }
 
-    handleTenantIDChange(event) {
+    updateValueRecordState(event) {
+        const field = event.target.name;
+        let valueRecord = this.state.valueRecord;
+        let validationState = this.state[Constants.VALIDATION_STATE_KEY];
 
-        var newState = {};
-        newState.tenantId = event.target.value;
-        newState[Constants.VALIDATION_STATE_KEY] = this.getValidationState(Constants.TENANT_ID_FIELD_KEY, event.target.value.length)
+        valueRecord[field] = event.target.value;
+        validationState = this.getValidationState(field, event.target.value.length)
 
-        this.setState(newState);
-
-    }
-
-    handleCodeChange(event) {
-        var newState = {};
-        newState.code = event.target.value;
-        newState[Constants.VALIDATION_STATE_KEY] = this.getValidationState(Constants.CODE_FIELD_KEY, event.target.value.length)
-
-        this.setState(newState);
-    }
-
-    handleNameChange(event) {
-        var newState = {};
-        newState.name = event.target.value;
-        newState[Constants.VALIDATION_STATE_KEY] = this.getValidationState(Constants.NAME_FIELD_KEY, event.target.value.length)
-
-        this.setState(newState);
-    }
-
-    handleValueChange(event) {
-        var newState = {};
-        newState.value = event.target.value;
-        newState[Constants.VALIDATION_STATE_KEY] = this.getValidationState(Constants.VALUE_FIELD_KEY, event.target.value.length)
-
-        this.setState(newState);
+        this.setState({ valueRecord: valueRecord, validationState: validationState });
     }
 
     handleSaveValue() {
-        this.props.createValue(this.state);
+        this.props.addOrUpdateValueRecord(this.state.valueRecord);
     }
 
-    componentWillReceiveProps(props) {
+    componentWillReceiveProps(newProps) {
+        console.log('componentWillReceiveProps', newProps);
+        // Update the status of the current record only if its persisted successfully!
+        // only update the ID and the version!!!
+        var recordCopy = { ...this.state.valueRecord };
 
-        var newState = {};
+        if (newProps.recordPersisted === true && newProps.isLoading === false && newProps.hasError === false) {
+            recordCopy.id = newProps.valueRecord.id;
+            recordCopy.version = newProps.valueRecord.version;
 
-        if (props.createValueResponse && props.createValueResponse.version)
-            newState = { id: props.createValueResponse.id, version: props.createValueResponse.version.value }
-
-        // show/hide success message
-        var cls = "hide";
-        if (props.isLoading !== true && props.recordPersisted === true) {
-            cls = "show";
+            this.setState({ valueRecord: recordCopy });
         }
-
-        newState = { ...newState, persistSuccessClass: cls }
-        this.setState(newState);
-
     }
 
+    shouldBlockNavigation() {
+        return !this.props.recordPersisted === true && this.props.isLoading === true;
+    }
+
+    componentDidUpdate() {
+        if (this.shouldBlockNavigation()) {
+            window.onbeforeunload = () => true
+        } else {
+            window.onbeforeunload = undefined
+        }
+    }
+
+    getSuccessClassName() {
+        var className = this.props.recordPersisted === true
+            && this.props.isLoading === false
+            && this.props.hasError === false
+            ? "show"
+            : "hide"
+        return className;
+    }
 
     render() {
         return (
@@ -116,9 +107,14 @@ class CreateValue extends Component {
                     <ValidationSummary errorState={this.props.errorState} />
                 </div>
 
-                <Alert bsStyle="success" className={this.state.persistSuccessClass}>
-                    Record is persister successfully
+                <Alert bsStyle="success" className={this.getSuccessClassName()}>
+                    Record is persisted successfully
                 </Alert>
+                <Prompt
+                    key='block-nav'
+                    when={this.shouldBlockNavigation()}
+                    message='You have unsaved changes, are you sure you want to leave?'
+                />
 
                 <FormGroup
                     validationState={this.state.validationState[Constants.TENANT_ID_FIELD_KEY]}
@@ -128,9 +124,10 @@ class CreateValue extends Component {
                     </Col>
                     <Col sm={10}>
                         <FormControl
-                            readOnly={this.props.createValueResponse.id}
-                            onChange={this.handleTenantIDChange}
-                            value={this.state.tenantId}
+                            name={Constants.TENANT_ID_FIELD_KEY}
+                            readOnly={this.state.valueRecord.id}
+                            onChange={this.updateValueRecordState}
+                            value={this.state.valueRecord.tenantId}
                             type="number" placeholder={Constants.TENANT_ID_FIELD_LABEL} />
                         <span className={this.getErrorClass(Constants.TENANT_ID_FIELD_KEY)}>
                             {Messages.FIELD_LENGTH_MIN_ERROR(Constants.TENANT_ID_FIELD_LABEL, 2)}
@@ -147,9 +144,10 @@ class CreateValue extends Component {
                     </Col>
                     <Col sm={10}>
                         <FormControl
-                            readOnly={this.props.createValueResponse.id}
-                            onChange={this.handleCodeChange}
-                            value={this.state.code}
+                            name={Constants.CODE_FIELD_KEY}
+                            readOnly={this.state.valueRecord.id}
+                            onChange={this.updateValueRecordState}
+                            value={this.state.valueRecord.code}
                             type="text" placeholder={Constants.CODE_FIELD_LABEL} />
                         <span className={this.getErrorClass(Constants.CODE_FIELD_KEY)}>
                             {Messages.FIELD_LENGTH_MIN_ERROR(Constants.CODE_FIELD_LABEL, 2)}
@@ -165,8 +163,9 @@ class CreateValue extends Component {
                     </Col>
                     <Col sm={10}>
                         <FormControl
-                            onChange={this.handleNameChange}
-                            value={this.state.name}
+                            name={Constants.NAME_FIELD_KEY}
+                            onChange={this.updateValueRecordState}
+                            value={this.state.valueRecord.name}
                             type="text" placeholder={Constants.NAME_FIELD_LABEL} />
                         <span className={this.getErrorClass(Constants.NAME_FIELD_KEY)}>
                             {Messages.FIELD_LENGTH_MIN_ERROR(Constants.NAME_FIELD_LABEL, 2)}
@@ -182,8 +181,9 @@ class CreateValue extends Component {
                     </Col>
                     <Col sm={10}>
                         <FormControl
-                            onChange={this.handleValueChange}
-                            value={this.state.value}
+                            name={Constants.VALUE_FIELD_KEY}
+                            onChange={this.updateValueRecordState}
+                            value={this.state.valueRecord.value}
                             componentClass="textarea" placeholder={Constants.VALUE_FIELD_LABEL} />
 
                         <span className={this.getErrorClass(Constants.VALUE_FIELD_KEY)}>
@@ -208,7 +208,19 @@ class CreateValue extends Component {
     }
 }
 
-export default connect(
-    state => state.lifeValues,
+function mapStateToProps(state, ownProps) {
+
+    var lifeValuesStore = state.lifeValues;
+    console.log('mapStateToProps', lifeValuesStore);
+    return {
+        isLoading: lifeValuesStore.isLoading,
+        valueRecord: lifeValuesStore.valueRecord,
+        hasError: lifeValuesStore.hasError,
+        errorState: lifeValuesStore.errorState,
+        recordPersisted: lifeValuesStore.recordPersisted
+    }
+}
+
+export default connect(mapStateToProps,
     dispatch => bindActionCreators(actionCreators, dispatch)
-)(CreateValue);
+)(ManageValueRecord);

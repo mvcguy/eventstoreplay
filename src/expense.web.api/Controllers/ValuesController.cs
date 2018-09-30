@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using expense.web.api.Values.Aggregate.Model;
 using expense.web.api.Values.Aggregate.Repository;
 using expense.web.api.Values.Commands;
 using expense.web.api.Values.Dtos;
@@ -30,7 +31,9 @@ namespace expense.web.api.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            return Ok(await Task.Run(() => _readModelRepository.GetAll().ToList()));
+            var records = await Task.Run(() => _readModelRepository.GetAll().ToList());
+            
+            return Ok(records.Select(ToViewModel));
         }
 
         // GET api/values/17aeed42-3aa7-42a6-a01e-00de257dbb91/2
@@ -40,17 +43,7 @@ namespace expense.web.api.Controllers
             var aggregate = _repository.GetById(id, version.GetValueOrDefault());
             if (aggregate == null) return NotFound("Item not found");
 
-            var vm = new ValueViewModel()
-            {
-                Id = aggregate.Id,
-                TenantId = new DtoProp<int?>(aggregate.TenantId),
-                Name = new DtoProp<string>(aggregate.Name),
-                Code = new DtoProp<string>(aggregate.Code),
-                Value = new DtoProp<string>(aggregate.Value),
-                Version = new DtoProp<long?>(aggregate.Version)
-            };
-
-            return Ok(vm);
+            return Ok(ToViewModel(aggregate));
         }
 
         // POST api/values
@@ -76,16 +69,7 @@ namespace expense.web.api.Controllers
 
             if (result.Success)
             {
-                var aggregate = result.ValueAggregateModel;
-                var vm = new ValueViewModel()
-                {
-                    Id = aggregate.Id,
-                    TenantId = new DtoProp<int?>(aggregate.TenantId),
-                    Name = new DtoProp<string>(aggregate.Name),
-                    Code = new DtoProp<string>(aggregate.Code),
-                    Value = new DtoProp<string>(aggregate.Value),
-                    Version = new DtoProp<long?>(aggregate.Version)
-                };
+                var vm = ToViewModel(result.ValueAggregateModel);
                 return Created($"~/api/values/{vm.Id}", vm);
             }
             else
@@ -121,16 +105,7 @@ namespace expense.web.api.Controllers
 
             if (result.Success)
             {
-                var aggregate = result.ValueAggregateModel;
-                var updatedVm = new ValueViewModel()
-                {
-                    Id = aggregate.Id,
-                    TenantId = new DtoProp<int?>(aggregate.TenantId),
-                    Name = new DtoProp<string>(aggregate.Name),
-                    Code = new DtoProp<string>(aggregate.Code),
-                    Value = new DtoProp<string>(aggregate.Value),
-                    Version = new DtoProp<long?>(aggregate.Version)
-                };
+                var updatedVm = ToViewModel(result.ValueAggregateModel);
                 return Ok(updatedVm);
             }
             else
@@ -144,5 +119,33 @@ namespace expense.web.api.Controllers
         public void Delete(int id)
         {
         }
+
+        public ValueViewModel ToViewModel(ValueRecord record)
+        {
+            return new ValueViewModel()
+            {
+                Id = record.PublicId,
+                TenantId = new DtoProp<int?>(record.TenantId),
+                Name = new DtoProp<string>(record.Name),
+                Code = new DtoProp<string>(record.Code),
+                Value = new DtoProp<string>(record.Value),
+                Version = new DtoProp<long?>(record.Version)
+            };
+        }
+
+        public ValueViewModel ToViewModel(IValueAggregateModel aggregate)
+        {
+            return new ValueViewModel()
+            {
+                Id = aggregate.Id,
+                TenantId = new DtoProp<int?>(aggregate.TenantId),
+                Name = new DtoProp<string>(aggregate.Name),
+                Code = new DtoProp<string>(aggregate.Code),
+                Value = new DtoProp<string>(aggregate.Value),
+                Version = new DtoProp<long?>(aggregate.Version)
+            };
+        }
     }
+
+
 }

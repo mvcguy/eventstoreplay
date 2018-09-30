@@ -35,7 +35,7 @@ function renderValuesTable(props) {
         </tr>
       </thead>
       <tbody>
-        {props.valuesListResponse.map(item =>
+        {props.valuesList.map(item =>
           <tr key={item.id}>
             <td>{item.tenantId}</td>
             <td>{item.code}</td>
