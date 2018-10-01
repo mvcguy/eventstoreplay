@@ -6,6 +6,7 @@ using expense.web.eventstore.EventStoreSubscriber;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace expense.web.api
@@ -31,6 +32,8 @@ namespace expense.web.api
                 var provider = scope.ServiceProvider;
                 
                 var subscriptionOptions = provider.GetService<IOptions<SubscriberOptions>>();
+                Microsoft.Extensions.Logging.ILogger<Program> logger = provider.GetService<Microsoft.Extensions.Logging.ILogger<Program>>();
+
 
                 var readSourceName = subscriptionOptions.Value.TopicName;
                 if (string.IsNullOrWhiteSpace(readSourceName))
@@ -57,7 +60,7 @@ namespace expense.web.api
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine(e);
+                            logger.LogError(e, e.Message);
                             throw;
                         }
                     }).Wait();
@@ -65,11 +68,7 @@ namespace expense.web.api
 
                 var eventSubscriber = provider.GetService<IEventStoreSubscriber>();
                 if (eventSubscriber.IsStarted) return;
-
-
-
-
-
+                
                 eventSubscriber.Start(readPointer.Position);
             }
         }

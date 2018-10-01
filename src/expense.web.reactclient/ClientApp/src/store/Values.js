@@ -204,6 +204,5 @@ export const reducer = (state = initialState, action) => {
             newState = { ...state };
             break;
     }
-    console.log('reducer', action.type, newState);
     return newState;
 };

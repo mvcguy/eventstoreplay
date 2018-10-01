@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using expense.web.eventstore.EventStoreDataContext;
 using EventStore.ClientAPI;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 
 namespace expense.web.eventstore.EventStoreSubscriber
@@ -13,17 +10,14 @@ namespace expense.web.eventstore.EventStoreSubscriber
     public abstract class EventStoreSubscriberBase : IEventStoreSubscriber
     {
         protected readonly IOptions<SubscriberOptions> Options;
-        private readonly ILogger _logger;
         private readonly IEventStoreConnection _eventStoreConnection;
 
         public bool IsStarted { get; private set; }
-        
-        protected EventStoreSubscriberBase(IOptions<SubscriberOptions> options, 
-            ILogger logger, 
+
+        protected EventStoreSubscriberBase(IOptions<SubscriberOptions> options,
             IEventStoreConnection eventStoreConnection)
         {
             Options = options;
-            _logger = logger;
             _eventStoreConnection = eventStoreConnection;
         }
 
@@ -33,12 +27,10 @@ namespace expense.web.eventstore.EventStoreSubscriber
             {
                 _eventStoreConnection.ConnectAsync().Wait();
 
-                var manualResetEvent = new ManualResetEvent(false);
-
                 try
                 {
                     var subscription = _eventStoreConnection.SubscribeToStreamFrom(Options.Value.TopicName,
-                        checkpoint,
+                        checkpoint == 0 ? null : checkpoint,
                         CatchUpSubscriptionSettings.Default,
                         HandleEvent,
                         Connected,
@@ -47,24 +39,22 @@ namespace expense.web.eventstore.EventStoreSubscriber
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e, e.Message);
-                    manualResetEvent.Set();
+                    OnException(e);
                 }
 
-                manualResetEvent.WaitOne();
             });
 
             return task;
         }
-        
+
         protected virtual void Connected(EventStoreCatchUpSubscription eventStoreCatchUpSubscription)
         {
-           
+
         }
 
         protected virtual void Dropped(EventStoreCatchUpSubscription eventStoreCatchUpSubscription, SubscriptionDropReason subscriptionDropReason, Exception exception)
         {
-           
+
         }
 
         protected virtual Task HandleEvent(EventStoreCatchUpSubscription eventStoreCatchUpSubscription, ResolvedEvent resolvedEvent)
@@ -83,7 +73,7 @@ namespace expense.web.eventstore.EventStoreSubscriber
             }
             catch (Exception e)
             {
-                OnEventException(e, resolvedEvent);
+                OnException(e);
             }
 
             return Task.CompletedTask;
@@ -91,9 +81,9 @@ namespace expense.web.eventstore.EventStoreSubscriber
 
         public abstract void OnEvent(EventModel @event);
 
-        protected virtual void OnEventException(Exception exception, ResolvedEvent resolvedEvent)
+        protected virtual void OnException(Exception exception)
         {
-            
+
         }
     }
 }

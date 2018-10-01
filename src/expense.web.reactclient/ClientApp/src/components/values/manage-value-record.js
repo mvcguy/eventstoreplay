@@ -17,7 +17,7 @@ class ManageValueRecord extends Component {
         this.updateValueRecordState = this.updateValueRecordState.bind(this);
         this.handleSaveValue = this.handleSaveValue.bind(this);
         this.getSuccessClassName = this.getSuccessClassName.bind(this);
-        this.cancelChanges = this.cancelChanges.bind(this);
+        this.backToList = this.backToList.bind(this);
 
         this.state = {
             valueRecord: Object.assign({}, props.valueRecord),
@@ -25,39 +25,21 @@ class ManageValueRecord extends Component {
             hasError: props.hasError,
             errorState: props.errorState,
             recordPersisted: props.recordPersisted,
-            validationState: {},
-            isDirty: false,
+            isDirty: props.isDirty,
         };
     }
 
-    // validates the minimum length of the field
-    getValidationState(property, length) {
-
-        var newValidationState = { ...this.state.validationState };
-        newValidationState[property] = length < 2 ? Constants.ERROR : Constants.SUCCESS;
-        return newValidationState;
-    }
 
     getErrorClass(property) {
-        return this.state.validationState[property] === Constants.ERROR ? "show error" : "hide error";
+        return "hide error";
     }
 
-    canSave() {
-        return true;
-        return this.state.validationState[Constants.TENANT_ID_FIELD_KEY] === Constants.SUCCESS &&
-            this.state.validationState[Constants.CODE_FIELD_KEY] === Constants.SUCCESS &&
-            this.state.validationState[Constants.NAME_FIELD_KEY] === Constants.SUCCESS &&
-            this.state.validationState[Constants.VALUE_FIELD_KEY] === Constants.SUCCESS;
-    }
 
     updateValueRecordState(event) {
         const field = event.target.name;
         let valueRecord = this.state.valueRecord;
-
         valueRecord[field] = event.target.value;
-        let validationState = this.getValidationState(field, event.target.value.length)
-
-        this.setState({ valueRecord: valueRecord, validationState: validationState, isDirty: true, });
+        this.setState({ valueRecord: valueRecord, isDirty: true, });
     }
 
     handleSaveValue() {
@@ -85,11 +67,10 @@ class ManageValueRecord extends Component {
     }
 
     shouldBlockNavigation() {
-        return !this.props.recordPersisted === true && this.props.isLoading === true || this.state.isDirty;
+        return (this.props.recordPersisted !== true && this.props.isLoading === true) || this.props.isDirty === true;
     }
 
     componentDidUpdate() {
-        console.log('componentdidupdate');
         if (this.shouldBlockNavigation()) {
             window.onbeforeunload = () => true
         } else {
@@ -114,7 +95,12 @@ class ManageValueRecord extends Component {
         }
     }
 
-    cancelChanges(e) {
+    componentWillUnmount() {
+        console.log('componentwillunmount');
+        window.onbeforeunload = undefined
+    }
+
+    backToList(e) {
         this.props.history.push('/values-list');
     }
 
@@ -136,7 +122,6 @@ class ManageValueRecord extends Component {
                 />
 
                 <FormGroup
-                    validationState={this.state.validationState[Constants.TENANT_ID_FIELD_KEY]}
                     controlId="tenantID">
                     <Col componentClass={ControlLabel} sm={2}>
                         {Constants.TENANT_ID_FIELD_LABEL}
@@ -156,7 +141,6 @@ class ManageValueRecord extends Component {
                 </FormGroup>
 
                 <FormGroup
-                    validationState={this.state.validationState[Constants.CODE_FIELD_KEY]}
                     controlId="code">
                     <Col componentClass={ControlLabel} sm={2}>
                         {Constants.CODE_FIELD_LABEL}
@@ -175,7 +159,6 @@ class ManageValueRecord extends Component {
                 </FormGroup>
 
                 <FormGroup
-                    validationState={this.state.validationState[Constants.NAME_FIELD_KEY]}
                     controlId="name">
                     <Col componentClass={ControlLabel} sm={2}>
                         {Constants.NAME_FIELD_LABEL}
@@ -193,7 +176,6 @@ class ManageValueRecord extends Component {
                 </FormGroup>
 
                 <FormGroup
-                    validationState={this.state.validationState[Constants.VALUE_FIELD_KEY]}
                     controlId="value">
                     <Col componentClass={ControlLabel} sm={2}>
                         {Constants.VALUE_FIELD_LABEL}
@@ -215,11 +197,11 @@ class ManageValueRecord extends Component {
                     <Col smOffset={2} xs={10}>
                         <Button
                             onClick={!this.props.isLoading ? this.handleSaveValue : (e) => {/*request in progress*/ }}
-                            disabled={this.canSave() && !this.props.isLoading ? false : true}
+                            disabled={!this.props.isLoading ? false : true}
                             type="button" id="submit" bsStyle="primary">Save</Button>
                         <span style={{ margin: '4px' }}></span>
                         <Button
-                            onClick={this.cancelChanges}
+                            onClick={this.backToList}
                             type="button" id="cancel" bsStyle="default">Back to list</Button>
                     </Col>
                     <Col xs={1}>
@@ -242,7 +224,8 @@ function mapStateToProps(state, ownProps) {
         hasError: lifeValuesStore.hasError,
         errorState: lifeValuesStore.errorState,
         recordPersisted: lifeValuesStore.recordPersisted,
-        paramsRecordId: paramsRecordId
+        paramsRecordId: paramsRecordId,
+        isDirty: false,
     }
 }
 

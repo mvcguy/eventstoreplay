@@ -19,7 +19,7 @@ namespace expense.web.api.Values.ReadModel
         private readonly IMongoClient _mongoClient;
         private readonly ILogger<ValuesEventConsumer> _logger;
         private readonly IReadModelRepository<ValueRecord> _valueRecordsRepository;
-        private readonly IReadModelRepository<ReadPointer> _readPointerRepistory;
+        private readonly IReadModelRepository<ReadPointer> _readPointerRepository;
         private ValueRecord _currentValueRecord;
         private DatabaseOperation _operation;
         private readonly ReadPointer _readPointer;
@@ -28,23 +28,17 @@ namespace expense.web.api.Values.ReadModel
             IMongoClient mongoClient,
             ILogger<ValuesEventConsumer> logger,
             IReadModelRepository<ValueRecord> valueRecordsRepository,
-            IReadModelRepository<ReadPointer> readPointerRepistory,
-            IEventStoreConnection eventStoreConnection) : base(options, logger, eventStoreConnection)
+            IReadModelRepository<ReadPointer> readPointerRepository,
+            IEventStoreConnection eventStoreConnection) : base(options, eventStoreConnection)
         {
             _mongoClient = mongoClient;
             _logger = logger;
             _valueRecordsRepository = valueRecordsRepository;
-            _readPointerRepistory = readPointerRepistory;
+            _readPointerRepository = readPointerRepository;
 
-            // there must be atleast one recrod!!!
-            _readPointer = _readPointerRepistory.GetAll()
-                .First(x => x.SourceName==options.Value.TopicName);
-        }
-
-        protected override void Connected(EventStoreCatchUpSubscription eventStoreCatchUpSubscription)
-        {
-            base.Connected(eventStoreCatchUpSubscription);
-            _logger.LogInformation("Listening to events from event store...");
+            // there must be at least one record!!!
+            _readPointer = _readPointerRepository.GetAll()
+                .First(x => x.SourceName == options.Value.TopicName);
         }
 
         public override void OnEvent(EventModel @event)
@@ -75,6 +69,7 @@ namespace expense.web.api.Values.ReadModel
             }
 
             // TODO: Check that the event version is higher than the current stored record
+
 
             if (_operation == DatabaseOperation.Undefined)
             {
@@ -115,6 +110,24 @@ namespace expense.web.api.Values.ReadModel
 
         }
 
+        protected override void Connected(EventStoreCatchUpSubscription eventStoreCatchUpSubscription)
+        {
+            base.Connected(eventStoreCatchUpSubscription);
+            _logger.LogInformation("Listening to events from event store...");
+        }
+
+        protected override void Dropped(EventStoreCatchUpSubscription sub, SubscriptionDropReason reason,
+            Exception exception)
+        {
+            base.Dropped(sub, reason, exception);
+            _logger.LogError(exception, $"Error: Connection to the server is dropped. Drop reason: {reason}");
+        }
+
+        protected override void OnException(Exception exception)
+        {
+            base.OnException(exception);
+            _logger.LogError(exception, "An error occurred while processing the event. Please see the exception details");
+        }
 
         private void Handle(ValueChangedEvent valueChangedEvent, string rawJson, EventModel @event, EventMetaData metaData)
         {
@@ -122,27 +135,36 @@ namespace expense.web.api.Values.ReadModel
 
             _operation = DatabaseOperation.Update;
             _currentValueRecord = GetRecord(valueChangedEvent.Id);
+
+            ThrowIfRecordIsNull(valueChangedEvent, _currentValueRecord);
+
             _currentValueRecord.Value = valueChangedEvent.Value;
 
             UpdateCommonFields(@event, metaData);
         }
-
 
         private void Handle(CodeChangedEvent codeChangedEvent, string rawJson, EventModel @event, EventMetaData metaData)
         {
             _logger.LogInformation($"Handling {nameof(CodeChangedEvent)} .... {Environment.NewLine} {rawJson}");
             _operation = DatabaseOperation.Update;
             _currentValueRecord = GetRecord(codeChangedEvent.Id);
+
+
+            ThrowIfRecordIsNull(codeChangedEvent, _currentValueRecord);
+
             _currentValueRecord.Code = codeChangedEvent.Code;
 
             UpdateCommonFields(@event, metaData);
         }
-        
+
         private void Handle(NameChangedEvent nameChangedEvent, string rawJson, EventModel @event, EventMetaData metaData)
         {
             _logger.LogInformation($"Handling {nameof(NameChangedEvent)} .... {Environment.NewLine} {rawJson}");
             _operation = DatabaseOperation.Update;
             _currentValueRecord = GetRecord(nameChangedEvent.Id);
+
+            ThrowIfRecordIsNull(nameChangedEvent, _currentValueRecord);
+
             _currentValueRecord.Name = nameChangedEvent.Name;
 
             UpdateCommonFields(@event, metaData);
@@ -178,16 +200,16 @@ namespace expense.web.api.Values.ReadModel
         {
             _readPointer.Position = position;
             _readPointer.LastModifiedOn = DateTime.Now;
-            Task.Run(() => { _readPointerRepistory.UpdateAsync(_readPointer); }).Wait();
+            Task.Run(() => { _readPointerRepository.UpdateAsync(_readPointer); }).Wait();
         }
-        
+
         private void UpdateCommonFields(EventModel @event, EventMetaData metaData)
         {
             _currentValueRecord.Version = @event.Version;
             _currentValueRecord.LastModifiedOn = DateTime.Now;
             _currentValueRecord.CommitId = metaData.CommitIdHeader;
         }
-        
+
         private void DeleteRecord(EventModel @event)
         {
             throw new NotImplementedException();
@@ -203,6 +225,12 @@ namespace expense.web.api.Values.ReadModel
             Task.Run(() => _valueRecordsRepository.AddAsync(_currentValueRecord)).Wait();
         }
 
+        private void ThrowIfRecordIsNull(IEventBase @event, IEntityBase record)
+        {
+            if (record != null) return;
+
+            throw new Exception($"Cannot process event: '{@event.EventType}'. Error: Record with ID: '{@event.Id}' cannot be found.");
+        }
     }
 
     public enum DatabaseOperation
