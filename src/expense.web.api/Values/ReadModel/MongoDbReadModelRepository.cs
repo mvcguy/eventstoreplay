@@ -21,7 +21,7 @@ namespace expense.web.api.Values.ReadModel
             Collection = database.GetCollection<TEntity>(typeof(TEntity).Name);
         }
 
-        public async Task<bool> AddOrUpdateAsync(TEntity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<bool> AddOrUpdateAsync(TEntity entity, IClientSessionHandle session, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -37,7 +37,7 @@ namespace expense.web.api.Values.ReadModel
             return result.ModifiedCount > 0;
         }
 
-        public async Task<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<bool> UpdateAsync(TEntity entity, IClientSessionHandle session, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -48,12 +48,23 @@ namespace expense.web.api.Values.ReadModel
             if (doc == null) return false;
 
             var result = await Collection
-                .ReplaceOneAsync(p => p.Id == entity.Id, entity,
+                .ReplaceOneAsync(session, p => p.Id == entity.Id, entity,
                     new UpdateOptions
                     {
                         IsUpsert = true
                     }, cancellationToken: cancellationToken);
             return result.ModifiedCount > 0;
+        }
+
+        public async Task<TEntity> AddAsync(TEntity entity, IClientSessionHandle session, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+
+            await Collection.InsertOneAsync(session, entity, cancellationToken: cancellationToken);
+            return entity;
         }
 
         public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default(CancellationToken))
@@ -67,14 +78,14 @@ namespace expense.web.api.Values.ReadModel
             return entity;
         }
 
-        public async Task AddManyAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = new CancellationToken())
+        public async Task AddManyAsync(IEnumerable<TEntity> entities, IClientSessionHandle session, CancellationToken cancellationToken = new CancellationToken())
         {
 
             if (entities == null)
                 throw new ArgumentNullException(nameof(entities));
 
             cancellationToken.ThrowIfCancellationRequested();
-            await Collection.InsertManyAsync(entities, cancellationToken: cancellationToken);
+            await Collection.InsertManyAsync(session, entities, cancellationToken: cancellationToken);
         }
 
         public async Task<TEntity> GetByIdAsync(object id, CancellationToken cancellationToken = default(CancellationToken))
@@ -94,7 +105,7 @@ namespace expense.web.api.Values.ReadModel
             return Collection.AsQueryable();
         }
 
-        public async Task<bool> RemoveByIdAsync(object id, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<bool> RemoveByIdAsync(object id, IClientSessionHandle session, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -102,18 +113,18 @@ namespace expense.web.api.Values.ReadModel
                 throw new ArgumentNullException(nameof(id));
 
             var filter = Builders<TEntity>.Filter.Eq(x => x.Id, id);
-            var result = await Collection.DeleteOneAsync(filter, cancellationToken);
+            var result = await Collection.DeleteOneAsync(session, filter, cancellationToken: cancellationToken);
             return result.DeletedCount > 0;
         }
 
-        public async Task<bool> RemoveEntityAsync(TEntity entity, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<bool> RemoveEntityAsync(TEntity entity, IClientSessionHandle session, CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             if (entity == null)
                 throw new ArgumentNullException(nameof(entity));
 
-            return await this.RemoveByIdAsync(entity.Id, cancellationToken);
+            return await this.RemoveByIdAsync(entity.Id, session, cancellationToken);
         }
 
     }

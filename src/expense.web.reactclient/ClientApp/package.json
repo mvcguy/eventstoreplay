@@ -1,5 +1,6 @@
 {
   "name": "expense.web.reactclient",
+  "homepage":"http://localhost/expenseplay/",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

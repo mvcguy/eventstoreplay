@@ -43,6 +43,7 @@ namespace expense.web.api.Values.ReadModel
 
         public override void OnEvent(EventModel @event)
         {
+            
             var metaDataJson = Encoding.UTF8.GetString(@event.Metadata);
             var eventDataJson = Encoding.UTF8.GetString(@event.Data);
 
@@ -84,18 +85,19 @@ namespace expense.web.api.Values.ReadModel
                     switch (_operation)
                     {
                         case DatabaseOperation.Create:
-                            InsertRecord(@event);
-                            UpdateReadPointer(@event.SequenceNumber);
+                            InsertRecord(@event, session);
+                            UpdateReadPointer(@event.SequenceNumber, session);
                             break;
                         case DatabaseOperation.Update:
-                            UpdateRecord(@event);
-                            UpdateReadPointer(@event.SequenceNumber);
+                            UpdateRecord(@event, session);
+                            UpdateReadPointer(@event.SequenceNumber, session);
                             break;
                         case DatabaseOperation.Delete:
-                            DeleteRecord(@event);
-                            UpdateReadPointer(@event.SequenceNumber);
+                            DeleteRecord(@event, session);
+                            UpdateReadPointer(@event.SequenceNumber, session);
                             break;
                     }
+                    ThrowIfThereIsHole(@event,_currentValueRecord.PublicId.GetValueOrDefault());
                     session.CommitTransaction();
                     _logger.LogInformation($"Event {@event.EventType} is successfully handled and persisted to database");
 
@@ -193,14 +195,14 @@ namespace expense.web.api.Values.ReadModel
         private ValueRecord GetRecord(Guid id)
         {
             return _valueRecordsRepository.GetAll()
-                .First(x => x.PublicId.Value == id);
+                .FirstOrDefault(x => x.PublicId.Value == id);
         }
 
-        private void UpdateReadPointer(long position)
+        private void UpdateReadPointer(long position, IClientSessionHandle session)
         {
             _readPointer.Position = position;
             _readPointer.LastModifiedOn = DateTime.Now;
-            Task.Run(() => { _readPointerRepository.UpdateAsync(_readPointer); }).Wait();
+            Task.Run(() => { _readPointerRepository.UpdateAsync(_readPointer, session); }).Wait();
         }
 
         private void UpdateCommonFields(EventModel @event, EventMetaData metaData)
@@ -210,19 +212,29 @@ namespace expense.web.api.Values.ReadModel
             _currentValueRecord.CommitId = metaData.CommitIdHeader;
         }
 
-        private void DeleteRecord(EventModel @event)
+        private void DeleteRecord(EventModel @event, IClientSessionHandle session)
         {
             throw new NotImplementedException();
         }
 
-        private void UpdateRecord(EventModel @event)
+        private void UpdateRecord(EventModel @event, IClientSessionHandle session)
         {
-            Task.Run(() => _valueRecordsRepository.UpdateAsync(_currentValueRecord)).Wait();
+            Task.Run(() => _valueRecordsRepository.UpdateAsync(_currentValueRecord, session)).Wait();
         }
 
-        private void InsertRecord(EventModel @event)
+        private void InsertRecord(EventModel @event, IClientSessionHandle session)
         {
-            Task.Run(() => _valueRecordsRepository.AddAsync(_currentValueRecord)).Wait();
+            Task.Run(() => _valueRecordsRepository.AddAsync(_currentValueRecord, session)).Wait();
+        }
+
+        private void ThrowIfThereIsHole(IEventModel @event, Guid aggregateId)
+        {
+            var record = GetRecord(aggregateId);
+            if (record == null) return;//record is not created yet!
+
+            if (@event.Version - 1 - record.Version != 0)
+                throw new Exception("Error: An event with un-expected version is arrived. " +
+                                    $"Expected version: {record.Version + 1}, Event version: {@event.Version}");
         }
 
         private void ThrowIfRecordIsNull(IEventBase @event, IEntityBase record)

@@ -32,7 +32,7 @@ namespace expense.web.api.Controllers
         public async Task<IActionResult> Get()
         {
             var records = await Task.Run(() => _readModelRepository.GetAll().ToList());
-            
+
             return Ok(records.Select(ToViewModel));
         }
 
@@ -74,7 +74,7 @@ namespace expense.web.api.Controllers
             }
             else
             {
-                return BadRequest(result);
+                return BadRequest(new Dictionary<string, List<string>>() { { "Error", new List<string>() { result.Message } } });
             }
 
 
@@ -87,8 +87,8 @@ namespace expense.web.api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!id.HasValue || id == Guid.Empty || vm == null || vm.Version == null || vm.Version.Value.GetValueOrDefault() == default(long))
-                return BadRequest(vm);
+            if (!id.HasValue || id == Guid.Empty || vm == null || vm.Version == null)
+                return BadRequest(new Dictionary<string, List<string>>() { { "Error", new List<string>() { "The request is invalid" } } });
 
             var updateCommand = new UpdateValueCommand
             {
@@ -110,7 +110,7 @@ namespace expense.web.api.Controllers
             }
             else
             {
-                return BadRequest(result);
+                return BadRequest(new Dictionary<string, List<string>>() { { "Error", new List<string>() { result.Message } } });
             }
         }
 

@@ -91,7 +91,7 @@ class ManageValueRecord extends Component {
         // when we are redirected with an id, fetch that record
         console.log('componentwillmount')
         if (this.props.paramsRecordId) {
-            this.props.getValueById(this.props.paramsRecordId);
+            this.props.getValueById(this.props.paramsRecordId, this.props.paramsVersion);
         }
     }
 
@@ -217,6 +217,7 @@ function mapStateToProps(state, ownProps) {
     console.log('mapStateToProps');
 
     var paramsRecordId = ownProps.match.params.recordId;
+    var paramsVersion = ownProps.match.params.version;
 
     return {
         isLoading: lifeValuesStore.isLoading,
@@ -225,6 +226,7 @@ function mapStateToProps(state, ownProps) {
         errorState: lifeValuesStore.errorState,
         recordPersisted: lifeValuesStore.recordPersisted,
         paramsRecordId: paramsRecordId,
+        paramsVersion: paramsVersion,
         isDirty: false,
     }
 }

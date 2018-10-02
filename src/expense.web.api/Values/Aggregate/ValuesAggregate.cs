@@ -31,10 +31,10 @@ namespace expense.web.api.Values.Aggregate
         // this constructor is used in generic reconstruction of this class by repositories
         public ValuesAggregate()
         {
-            
+
         }
 
-        public ValuesAggregate(IValuesRepository repository) : this(Guid.NewGuid(), 0, repository)
+        public ValuesAggregate(IValuesRepository repository) : this(Guid.NewGuid(), -1, repository)
         {
 
         }

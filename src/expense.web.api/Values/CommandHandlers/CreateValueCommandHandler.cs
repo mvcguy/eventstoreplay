@@ -49,7 +49,7 @@ namespace expense.web.api.Values.CommandHandlers
                 {
                     _logger.LogError(e.Message, e);
                     result.Success = false;
-                    result.Message = e.Message;
+                    result.Message = $"{e.Message} {Environment.NewLine} {e.StackTrace}";
                 }
             }, cancellationToken);
 

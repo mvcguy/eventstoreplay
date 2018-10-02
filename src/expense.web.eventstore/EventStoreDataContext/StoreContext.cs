@@ -63,7 +63,7 @@ namespace expense.web.eventstore.EventStoreDataContext
                         Data = @event.OriginalEvent.Data,
                         Metadata = @event.OriginalEvent.Metadata,
                         SequenceNumber = @event.OriginalEventNumber,
-                        Version = @event.OriginalEvent.EventNumber + 1,
+                        Version = @event.OriginalEvent.EventNumber,
                         EventType = @event.OriginalEvent.EventType,
                         IsJson = @event.OriginalEvent.IsJson,
                     });
@@ -84,7 +84,7 @@ namespace expense.web.eventstore.EventStoreDataContext
 
             var streamName = AggregateIdToStreamName(aggregate.GetType(), aggregate.Id);
 
-            var originalVersion = aggregate.Version - newEvents.Count - 1;
+            var originalVersion = aggregate.Version - newEvents.Count;
             var expectedVersion = originalVersion < 0 ? ExpectedVersion.NoStream : originalVersion;
             var eventsToSave = newEvents.Select(e => ToEventData(Guid.NewGuid(), e)).ToList();
 

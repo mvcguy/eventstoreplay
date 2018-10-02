@@ -127,11 +127,17 @@ export const actionCreators = {
         });
     },
 
-    getValueById: function (id) {
+    getValueById: function (id, version) {
         var action = async function (dispatch, getState) {
             dispatch({ type: requestValueByIdType, hasError: false, valueRecord: initialState.valueRecord });
 
-            fetch(url + `/${id}`).then(async (response) => {
+            var newUrl = url;
+            if (id && version)
+                newUrl = url + `/${id}/${version}`
+            else
+                newUrl = url + `/${id}`
+
+            fetch(newUrl).then(async (response) => {
                 var result = await response.json();
                 if (response.ok === true) {
                     dispatch({

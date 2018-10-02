@@ -54,14 +54,14 @@ namespace expense.web.api
 
             //read model
 
-            services.AddSingleton<IMongoClient>(provider =>
+            services.AddSingleton(provider =>
             {
                 var connectionString = Configuration["MongoDB:MongoContext:ConnectionString"];
-                var client = new MongoClient(connectionString);
+                IMongoClient client = new MongoClient(connectionString);
                 return client;
             });
 
-            services.AddSingleton<IMongoDatabase>(provider =>
+            services.AddSingleton(provider =>
             {
                 var client = provider.GetService<IMongoClient>();
                 var databaseName = Configuration["MongoDB:MongoContext:DatabaseName"];

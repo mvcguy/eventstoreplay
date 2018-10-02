@@ -30,7 +30,7 @@ namespace expense.web.api
             using (var scope = host.Services.CreateScope())
             {
                 var provider = scope.ServiceProvider;
-                
+
                 var subscriptionOptions = provider.GetService<IOptions<SubscriberOptions>>();
                 Microsoft.Extensions.Logging.ILogger<Program> logger = provider.GetService<Microsoft.Extensions.Logging.ILogger<Program>>();
 
@@ -47,7 +47,7 @@ namespace expense.web.api
                     readPointer = new ReadPointer
                     {
                         SourceName = readSourceName,
-                        Position = 0,
+                        Position = -1,
                         CreatedOn = DateTime.Now,
                         LastModifiedOn = DateTime.Now,
                         PublicId = Guid.NewGuid()
@@ -68,8 +68,8 @@ namespace expense.web.api
 
                 var eventSubscriber = provider.GetService<IEventStoreSubscriber>();
                 if (eventSubscriber.IsStarted) return;
-                
-                eventSubscriber.Start(readPointer.Position);
+
+                eventSubscriber.Start(readPointer.Position + 1);
             }
         }
     }

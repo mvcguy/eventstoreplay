@@ -65,8 +65,8 @@ namespace expense.web.eventstore.EventStoreSubscriber
                 {
                     Data = resolvedEvent.Event.Data,
                     Metadata = resolvedEvent.Event.Metadata,
-                    Version = resolvedEvent.Event.EventNumber + 1,
-                    SequenceNumber = resolvedEvent.OriginalEventNumber,// checkpoint
+                    Version = resolvedEvent.Event.EventNumber,
+                    SequenceNumber = resolvedEvent.OriginalEventNumber,// checkpoint???
                     IsJson = resolvedEvent.Event.IsJson,
                     EventType = resolvedEvent.Event.EventType
                 });
