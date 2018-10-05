@@ -4,7 +4,7 @@ using System.Threading;
 using expense.web.api.Values.Aggregate.Constants;
 using expense.web.api.Values.Aggregate.Model;
 
-namespace expense.web.api.Values.Aggregate.Events
+namespace expense.web.api.Values.Aggregate.Events.Base
 {
     public class EventBase : IEventBase
     {
@@ -13,7 +13,7 @@ namespace expense.web.api.Values.Aggregate.Events
             _metaData = new Dictionary<string, object>();
         }
 
-        public EventBase(IValueAggregateModel model, string eventType, string eventClrType)
+        public EventBase(IAggregateModel model, string eventType, string eventClrType)
         {
             TenantId = model.TenantId;
             Id = model.Id;
@@ -44,14 +44,5 @@ namespace expense.web.api.Values.Aggregate.Events
         {
             return _metaData;
         }
-    }
-
-    public class EventMetaData
-    {
-        public string AggregateClrTypeHeader { get; set; }
-
-        public string EventClrTypeHeader { get; set; }
-
-        public Guid CommitIdHeader { get; set; }
     }
 }

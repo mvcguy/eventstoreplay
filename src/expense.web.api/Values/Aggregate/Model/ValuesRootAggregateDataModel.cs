@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace expense.web.api.Values.Aggregate.Model
 {
-    public class ValueDataModel : IValueAggregateModel
+    public class ValuesRootAggregateDataModel : IValuesRootAggregateModel
     {
 
         // Notes:
@@ -22,6 +21,6 @@ namespace expense.web.api.Values.Aggregate.Model
         public long Version { get; set; }
 
         public Guid CommitId { get; set; }
-        public IList<ValueComment> Comments { get; set; }
     }
+
 }

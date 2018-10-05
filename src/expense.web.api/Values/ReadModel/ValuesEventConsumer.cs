@@ -3,7 +3,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using expense.web.api.Values.Aggregate.Constants;
-using expense.web.api.Values.Aggregate.Events;
+using expense.web.api.Values.Aggregate.Events.Base;
+using expense.web.api.Values.Aggregate.Events.Root;
 using expense.web.eventstore.EventStoreDataContext;
 using expense.web.eventstore.EventStoreSubscriber;
 using EventStore.ClientAPI;
@@ -219,6 +220,7 @@ namespace expense.web.api.Values.ReadModel
 
         private void UpdateRecord(EventModel @event, IClientSessionHandle session)
         {
+            
             Task.Run(() => _valueRecordsRepository.UpdateAsync(_currentValueRecord, session)).Wait();
         }
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using expense.web.api.Values.Aggregate;
 using expense.web.api.Values.Aggregate.Model;
 using expense.web.api.Values.Aggregate.Repository;
 using expense.web.api.Values.Commands;
@@ -17,13 +18,13 @@ namespace expense.web.api.Controllers
     public class ValuesController : ControllerBase
     {
         private readonly IMediator _mediator;
-        private readonly IValuesRepository _repository;
+        private readonly IRepository<ValuesRootAggregate> _rootAggregateRepository;
         private readonly IReadModelRepository<ValueRecord> _readModelRepository;
 
-        public ValuesController(IMediator mediator, IValuesRepository repository, IReadModelRepository<ValueRecord> readModelRepository)
+        public ValuesController(IMediator mediator, IRepository<ValuesRootAggregate> rootAggregateRepository, IReadModelRepository<ValueRecord> readModelRepository)
         {
             _mediator = mediator;
-            _repository = repository;
+            _rootAggregateRepository = rootAggregateRepository;
             _readModelRepository = readModelRepository;
         }
 
@@ -40,7 +41,7 @@ namespace expense.web.api.Controllers
         [HttpGet("{id}/{version?}")]
         public IActionResult Get(Guid id, long? version = null)
         {
-            var aggregate = _repository.GetById(id, version.GetValueOrDefault());
+            var aggregate = _rootAggregateRepository.GetById(id, version.GetValueOrDefault());
             if (aggregate == null) return NotFound("Item not found");
 
             return Ok(ToViewModel(aggregate));
@@ -69,7 +70,7 @@ namespace expense.web.api.Controllers
 
             if (result.Success)
             {
-                var vm = ToViewModel(result.ValueAggregateModel);
+                var vm = ToViewModel(result.ValuesRootAggregateModel);
                 return Created($"~/api/values/{vm.Id}", vm);
             }
             else
@@ -105,7 +106,7 @@ namespace expense.web.api.Controllers
 
             if (result.Success)
             {
-                var updatedVm = ToViewModel(result.ValueAggregateModel);
+                var updatedVm = ToViewModel(result.ValuesRootAggregateModel);
                 return Ok(updatedVm);
             }
             else
@@ -133,7 +134,7 @@ namespace expense.web.api.Controllers
             };
         }
 
-        public ValueViewModel ToViewModel(IValueAggregateModel aggregate)
+        public ValueViewModel ToViewModel(IValuesRootAggregateModel aggregate)
         {
             return new ValueViewModel()
             {

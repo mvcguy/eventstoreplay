@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using expense.web.api.Values.Aggregate.Events;
+using expense.web.api.Values.Aggregate.Events.Base;
 using expense.web.eventstore.EventStoreDataContext;
 using Newtonsoft.Json;
 

@@ -1,4 +1,4 @@
-﻿using expense.web.api.Values.Aggregate.Events;
+﻿using expense.web.api.Values.Aggregate.Events.Root;
 
 namespace expense.web.api.Values.Aggregate.Constants
 {
@@ -11,7 +11,7 @@ namespace expense.web.api.Values.Aggregate.Constants
             public const string ValueChanged = nameof(ValueChangedEvent);
             public const string NameChanged = nameof(NameChangedEvent);
         }
-
+        
         public class EventMetaDataHeaders
         {
             public const string EventClrTypeHeader = "EventClrTypeHeader";

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 using expense.web.api.Values.Attributes;
 
 namespace expense.web.api.Values.Dtos

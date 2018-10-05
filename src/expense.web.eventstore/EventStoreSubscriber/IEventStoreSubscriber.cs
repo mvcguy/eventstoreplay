@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using expense.web.eventstore.EventStoreDataContext;
 
 namespace expense.web.eventstore.EventStoreSubscriber

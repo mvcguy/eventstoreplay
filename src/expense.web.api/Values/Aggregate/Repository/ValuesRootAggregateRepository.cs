@@ -2,28 +2,27 @@
 using System.Linq;
 using System.Text;
 using expense.web.api.Values.Aggregate.Constants;
-using expense.web.api.Values.Aggregate.Events;
-using expense.web.api.Values.Aggregate.Model;
+using expense.web.api.Values.Aggregate.Events.Root;
 using expense.web.eventstore.EventStoreDataContext;
 using Newtonsoft.Json;
 
 namespace expense.web.api.Values.Aggregate.Repository
 {
-    public class ValuesRepository : IValuesRepository
+    public class ValuesRootAggregateRepository : IRepository<ValuesRootAggregate>
     {
-        private readonly StoreContext<ValuesAggregate, EventModel> _context;
+        private readonly StoreContext<ValuesRootAggregate, EventModel> _context;
 
-        public ValuesRepository(StoreContext<ValuesAggregate, EventModel> context)
+        public ValuesRootAggregateRepository(StoreContext<ValuesRootAggregate, EventModel> context)
         {
             _context = context;
         }
 
-        public ValuesAggregate GetById(Guid id)
+        public ValuesRootAggregate GetById(Guid id)
         {
             return GetById(id, int.MaxValue);
         }
         
-        public ValuesAggregate GetById(Guid id, long version)
+        public ValuesRootAggregate GetById(Guid id, long version)
         {
             var temp = version;
             if (temp <= 0)
@@ -38,14 +37,14 @@ namespace expense.web.api.Values.Aggregate.Repository
             return CreateAggregate(aggregate);
         }
 
-        public bool Save(ValuesAggregate aggregate)
+        public bool Save(ValuesRootAggregate rootAggregate)
         {
-            return _context.Save(aggregate);
+            return _context.Save(rootAggregate);
         }
 
-        private ValuesAggregate CreateAggregate(IEsAggregate<EventModel> esAggregate)
+        private ValuesRootAggregate CreateAggregate(IEsAggregate<EventModel> esAggregate)
         {
-            var aggregate = new ValuesAggregate(esAggregate.Id, esAggregate.Events.Max(x => x.Version), this);
+            var aggregate = new ValuesRootAggregate(esAggregate.Id, esAggregate.Events.Max(x => x.Version), this);
 
             foreach (var aggregateEvent in esAggregate.Events)
             {
@@ -73,12 +72,12 @@ namespace expense.web.api.Values.Aggregate.Repository
             return aggregate;
         }
 
-        public bool Exists(IValueAggregateModel model)
+        public bool Exists(ValuesRootAggregate model)
         {
             throw new NotImplementedException();
         }
 
-        public bool Exists(IValueAggregateModel model, out Guid aggregateId)
+        public bool Exists(ValuesRootAggregate model, out Guid aggregateId)
         {
             throw new NotImplementedException();
         }

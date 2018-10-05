@@ -1,20 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using expense.web.api.Values.Aggregate.Events;
+using expense.web.api.Values.Aggregate.Events.Base;
+using expense.web.api.Values.Aggregate.Events.Root;
 using expense.web.api.Values.Aggregate.Model;
 using expense.web.api.Values.Aggregate.Repository;
 using expense.web.eventstore.EventStoreDataContext;
 
 namespace expense.web.api.Values.Aggregate
 {
-    public class ValuesAggregate : AggregateBase<EventModel>, IValueAggregateModel
+    public class ValuesRootAggregate : AggregateBase<EventModel>, IValuesRootAggregateModel
     {
 
         // Notes:
         // 1. When we construct the aggregate, we don't wanna publish event for each property changes, rather an event called 'ValueCreatedEvent' is fired containing all required props
         // 2. We want to publish individual events for each property change. e.g., NameChangedEvent if the value of the ValueAggregate is changed.
 
-        private readonly IValuesRepository _repository;
+        private readonly IRepository<ValuesRootAggregate> _rootAggregateRepository;
 
         public int TenantId { get; private set; }
 
@@ -26,33 +26,31 @@ namespace expense.web.api.Values.Aggregate
 
         public Guid CommitId { get; set; }
 
-        public IList<ValueComment> Comments { get; private set; }
-
         // this constructor is used in generic reconstruction of this class by repositories
-        public ValuesAggregate()
+        public ValuesRootAggregate()
         {
 
         }
 
-        public ValuesAggregate(IValuesRepository repository) : this(Guid.NewGuid(), -1, repository)
+        public ValuesRootAggregate(IRepository<ValuesRootAggregate> rootAggregateRepository) : this(Guid.NewGuid(), -1, rootAggregateRepository)
         {
 
         }
 
-        public ValuesAggregate(Guid id, long version, IValuesRepository repository)
+        public ValuesRootAggregate(Guid id, long version, IRepository<ValuesRootAggregate> rootAggregateRepository)
         {
             this.Id = id;
             this.Version = version;
-            _repository = repository;
+            _rootAggregateRepository = rootAggregateRepository;
             this.CommitId = Guid.NewGuid();
         }
 
         public bool Save()
         {
-            return _repository.Save(this);
+            return _rootAggregateRepository.Save(this);
         }
 
-        public void CreateValue(IValueAggregateModel model)
+        public void CreateValue(IValuesRootAggregateModel model)
         {
             // Note: We want to modify the props using there methods, to keep the business logic in one place
             // Also we don't want to fire individual prop changed events when an aggregate is created first time
@@ -115,7 +113,7 @@ namespace expense.web.api.Values.Aggregate
 
         /// <summary>
         /// Apply event performs two operations
-        /// 1. Adds the event to the list of uncommited events
+        /// 1. Adds the event to the list of uncommitted events
         /// 2. Increment the version of the aggregate
         /// </summary>
         /// <param name="eventType"></param>
@@ -124,16 +122,16 @@ namespace expense.web.api.Values.Aggregate
             switch (eventType)
             {
                 case ValueEventType.CodeChanged:
-                    base.ApplyEvent(CreateCodeChangedEvent(this));
+                    base.ApplyEvent(new CodeChangedEvent(this));
                     break;
                 case ValueEventType.NameChanged:
-                    base.ApplyEvent(CreateNameChangedEvent(this));
+                    base.ApplyEvent(new NameChangedEvent(this));
                     break;
                 case ValueEventType.ValueChanged:
-                    base.ApplyEvent(CreateValueChangedEvent(this));
+                    base.ApplyEvent(new ValueChangedEvent(this));
                     break;
                 case ValueEventType.ValueCreated:
-                    base.ApplyEvent(CreateValueCreatedEvent(this));
+                    base.ApplyEvent(new ValueCreatedEvent(this));
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(eventType), eventType, null);
@@ -178,35 +176,5 @@ namespace expense.web.api.Values.Aggregate
 
         #endregion
 
-
-
-        #region EventsFactory
-
-        public CodeChangedEvent CreateCodeChangedEvent(IValueAggregateModel model)
-        {
-            return new CodeChangedEvent(model) { Code = model.Code };
-        }
-
-        public NameChangedEvent CreateNameChangedEvent(IValueAggregateModel model)
-        {
-            return new NameChangedEvent(model) { Name = model.Name };
-        }
-
-        public ValueChangedEvent CreateValueChangedEvent(IValueAggregateModel model)
-        {
-            return new ValueChangedEvent(model) { Value = model.Value };
-        }
-
-        public ValueCreatedEvent CreateValueCreatedEvent(IValueAggregateModel model)
-        {
-            return new ValueCreatedEvent(model)
-            {
-                Code = model.Code,
-                Name = model.Name,
-                Value = model.Value
-            };
-        }
-
-        #endregion
     }
 }

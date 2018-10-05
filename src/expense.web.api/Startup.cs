@@ -1,4 +1,5 @@
 ﻿using System;
+using expense.web.api.Values.Aggregate;
 using expense.web.api.Values.Aggregate.Repository;
 using expense.web.api.Values.ReadModel;
 using expense.web.eventstore.EventStoreDataContext;
@@ -14,7 +15,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using IEventStoreLogger = EventStore.ClientAPI.ILogger;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 
 namespace expense.web.api
@@ -41,7 +41,7 @@ namespace expense.web.api
 
             services.AddSingleton<IEventStoreLogger, EventStoreLogger>();
             services.AddTransient(typeof(StoreContext<,>));
-            services.AddTransient<IValuesRepository, ValuesRepository>();
+            services.AddTransient<IRepository<ValuesRootAggregate>, ValuesRootAggregateRepository>();
 
             services.AddTransient(provider =>
             {

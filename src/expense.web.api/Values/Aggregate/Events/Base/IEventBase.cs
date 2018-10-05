@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace expense.web.api.Values.Aggregate.Events
+namespace expense.web.api.Values.Aggregate.Events.Base
 {
     public interface IEventBase
     {

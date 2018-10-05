@@ -8,6 +8,6 @@ namespace expense.web.api.Values.Commands
 
         public string Message { get; set; }
 
-        public IValueAggregateModel ValueAggregateModel { get; set; }
+        public IValuesRootAggregateModel ValuesRootAggregateModel { get; set; }
     }
 }

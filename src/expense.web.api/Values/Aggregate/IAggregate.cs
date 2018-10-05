@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 
 namespace expense.web.api.Values.Aggregate
 {

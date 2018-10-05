@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using expense.web.api.Values.Aggregate;
 using expense.web.api.Values.Aggregate.Repository;
 using expense.web.api.Values.Commands;
 using MediatR;
@@ -10,12 +11,12 @@ namespace expense.web.api.Values.CommandHandlers
 {
     public class UpdateValueCommandHandler : IRequestHandler<UpdateValueCommand, ValueCommandResponse>
     {
-        private readonly IValuesRepository _repository;
+        private readonly IRepository<ValuesRootAggregate> _rootAggregateRepository;
         private readonly ILogger<UpdateValueCommandHandler> _logger;
 
-        public UpdateValueCommandHandler(IValuesRepository repository, ILogger<UpdateValueCommandHandler> logger)
+        public UpdateValueCommandHandler(IRepository<ValuesRootAggregate> rootAggregateRepository, ILogger<UpdateValueCommandHandler> logger)
         {
-            _repository = repository;
+            _rootAggregateRepository = rootAggregateRepository;
             _logger = logger;
         }
 
@@ -29,7 +30,7 @@ namespace expense.web.api.Values.CommandHandlers
             {
                 try
                 {
-                    var aggregate = _repository.GetById(request.Id);
+                    var aggregate = _rootAggregateRepository.GetById(request.Id);
 
                     if (aggregate == null)
                     {
@@ -67,7 +68,7 @@ namespace expense.web.api.Values.CommandHandlers
                     aggregate.Save();
 
                     result.Success = true;
-                    result.ValueAggregateModel = aggregate;
+                    result.ValuesRootAggregateModel = aggregate;
 
                 }
                 catch (Exception e)

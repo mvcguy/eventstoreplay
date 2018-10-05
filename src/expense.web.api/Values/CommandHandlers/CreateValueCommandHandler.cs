@@ -12,12 +12,12 @@ namespace expense.web.api.Values.CommandHandlers
 {
     public class CreateValueCommandHandler : IRequestHandler<CreateValueCommand, ValueCommandResponse>
     {
-        private readonly IValuesRepository _repository;
+        private readonly IRepository<ValuesRootAggregate> _rootAggregateRepository;
         private readonly ILogger<CreateValueCommandHandler> _logger;
 
-        public CreateValueCommandHandler(IValuesRepository repository, ILogger<CreateValueCommandHandler> logger)
+        public CreateValueCommandHandler(IRepository<ValuesRootAggregate> rootAggregateRepository, ILogger<CreateValueCommandHandler> logger)
         {
-            _repository = repository;
+            _rootAggregateRepository = rootAggregateRepository;
             _logger = logger;
         }
 
@@ -29,9 +29,9 @@ namespace expense.web.api.Values.CommandHandlers
             {
                 try
                 {
-                    var valuesAggregate = new ValuesAggregate(_repository);
+                    var valuesAggregate = new ValuesRootAggregate(_rootAggregateRepository);
                     cancellationToken.ThrowIfCancellationRequested();
-                    valuesAggregate.CreateValue(new ValueDataModel
+                    valuesAggregate.CreateValue(new ValuesRootAggregateDataModel
                     {
                         TenantId = command.Request.TenantId.GetValueOrDefault(),
                         Name = command.Request.Name,
@@ -43,7 +43,7 @@ namespace expense.web.api.Values.CommandHandlers
                     valuesAggregate.Save();
 
                     result.Success = true;
-                    result.ValueAggregateModel = valuesAggregate;
+                    result.ValuesRootAggregateModel = valuesAggregate;
                 }
                 catch (Exception e)
                 {

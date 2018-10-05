@@ -1,7 +1,8 @@
 ﻿using expense.web.api.Values.Aggregate.Constants;
+using expense.web.api.Values.Aggregate.Events.Base;
 using expense.web.api.Values.Aggregate.Model;
 
-namespace expense.web.api.Values.Aggregate.Events
+namespace expense.web.api.Values.Aggregate.Events.Root
 {
     public class ValueChangedEvent : EventBase
     {
@@ -12,10 +13,10 @@ namespace expense.web.api.Values.Aggregate.Events
 
         }
 
-        public ValueChangedEvent(IValueAggregateModel model) : base(model, ValueAggregateConstants.EventTypes.ValueChanged,
+        public ValueChangedEvent(IValuesRootAggregateModel model) : base(model, ValueAggregateConstants.EventTypes.ValueChanged,
             typeof(ValueChangedEvent).AssemblyQualifiedName)
         {
-
+            Value = model.Value;
         }
     }
 }
