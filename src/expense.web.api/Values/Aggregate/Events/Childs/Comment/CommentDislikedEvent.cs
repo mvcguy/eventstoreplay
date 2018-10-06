@@ -11,7 +11,7 @@ namespace expense.web.api.Values.Aggregate.Events.Childs.Comment
             
         }
 
-        public CommentDislikedEvent(IValueCommentChildAggregateDataModel model)
+        public CommentDislikedEvent(IValueCommentAggregateChildDataModel model)
             : base(model,
                 CommentAggConstants.EventType.CommentDisliked,
                 typeof(CommentDislikedEvent).AssemblyQualifiedName)

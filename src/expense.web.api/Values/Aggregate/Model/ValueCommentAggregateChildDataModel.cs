@@ -2,7 +2,7 @@
 
 namespace expense.web.api.Values.Aggregate.Model
 {
-    public class ValueCommentChildAggregateDataModel : IValueCommentChildAggregateDataModel
+    public class ValueCommentAggregateChildDataModel : IValueCommentAggregateChildDataModel
     {
         public long Version { get; set; }
         public Guid CommitId { get; set; }

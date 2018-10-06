@@ -23,7 +23,7 @@ namespace expense.web.api.Values.Aggregate.Events.Childs.Comment
 
         }
 
-        public CommentAddedEvent(IValueCommentChildAggregateDataModel model)
+        public CommentAddedEvent(IValueCommentAggregateChildDataModel model)
             : base(model,
                 CommentAggConstants.EventType.CommentAdded,
                 typeof(CommentAddedEvent).AssemblyQualifiedName)

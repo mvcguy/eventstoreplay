@@ -1,14 +1,12 @@
 ﻿using System;
 using expense.web.api.Values.Aggregate.Events.Childs.Comment;
 using expense.web.api.Values.Aggregate.Model;
-using expense.web.api.Values.Aggregate.Repository;
-using expense.web.eventstore.EventStoreDataContext;
 
 namespace expense.web.api.Values.Aggregate
 {
-    public class ValueCommentChildAggregate : AggregateBase<EventModel>, IValueCommentChildAggregateDataModel
+    public class ValueCommentAggregateChild : IValueCommentAggregateChildDataModel
     {
-        private readonly IRepository<ValueCommentChildAggregate> _repository;
+        private readonly ValuesRootAggregate _root;
 
         /// <summary>
         /// root aggregate Id
@@ -23,30 +21,31 @@ namespace expense.web.api.Values.Aggregate
 
         public int Dislikes { get; private set; }
 
-        public Guid CommitId { get; set; }
+        public Guid Id { get; }
 
         public int TenantId { get; set; }
+        public Guid CommitId { get; }
 
-        public ValueCommentChildAggregate()
+        public ValueCommentAggregateChild()
         {
 
         }
 
-        public ValueCommentChildAggregate(Guid parentId,
-            IRepository<ValueCommentChildAggregate> repository,
-            Guid? id = null, long version = -1)
+        public ValueCommentAggregateChild(ValuesRootAggregate root, Guid? id = null)
         {
-            _repository = repository;
-            this.ParentId = parentId;
-            this.Version = version;
-            this.CommitId = Guid.NewGuid();
+            _root = root;
+            this.ParentId = root.Id;
+            this.CommitId = root.CommitId;
             this.Id = id ?? Guid.NewGuid();
         }
 
-        public void AddComment(ValueCommentChildAggregateDataModel model)
+        public void AddComment(IValueCommentAggregateChildDataModel model, bool applyEvent = true)
         {
+            // when a comment is first added, we don't need to fire individual events
             ChangeCommentText(model.Comment, applyEvent: false);
             ChangeCommentUser(model.UserName, applyEvent: false);
+
+            if (!applyEvent) return;
 
             ApplyEvent(CommentEventTypes.CommentAdded);
         }
@@ -66,7 +65,7 @@ namespace expense.web.api.Values.Aggregate
 
             if (!applyEvent) return;
 
-            // Are we updating comment user except when the comment is first time created?
+            // Are we updating username beside when the comment is first time created?
         }
 
         public void CommentLiked(bool applyEvent = true)
@@ -92,16 +91,16 @@ namespace expense.web.api.Values.Aggregate
             switch (eventType)
             {
                 case CommentEventTypes.CommentAdded:
-                    base.ApplyEvent(new CommentAddedEvent(this));
+                    _root.ApplyEvent(new CommentAddedEvent(this));
                     break;
                 case CommentEventTypes.CommentTextChanged:
-                    base.ApplyEvent(new CommentTextChangedEvent(this));
+                    _root.ApplyEvent(new CommentTextChangedEvent(this));
                     break;
                 case CommentEventTypes.CommentLiked:
-                    base.ApplyEvent(new CommentLikedEvent(this));
+                    _root.ApplyEvent(new CommentLikedEvent(this));
                     break;
                 case CommentEventTypes.CommentDisliked:
-                    base.ApplyEvent(new CommentDislikedEvent(this));
+                    _root.ApplyEvent(new CommentDislikedEvent(this));
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(eventType), eventType, null);

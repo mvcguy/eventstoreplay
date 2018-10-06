@@ -2,7 +2,7 @@
 
 namespace expense.web.api.Values.Aggregate.Model
 {
-    public interface IValueCommentChildAggregateDataModel : IAggregateModel
+    public interface IValueCommentAggregateChildDataModel : IAggregateModel
     {
         Guid ParentId { get; }
 
@@ -13,5 +13,7 @@ namespace expense.web.api.Values.Aggregate.Model
         int Likes { get; }
 
         int Dislikes { get; }
+
+
     }
 }

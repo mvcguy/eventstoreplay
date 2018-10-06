@@ -1,4 +1,6 @@
-﻿namespace expense.web.api.Values.Aggregate.Model
+﻿using System;
+
+namespace expense.web.api.Values.Aggregate.Model
 {
     // root aggregate
     public interface IValuesRootAggregateModel : IAggregateModel
@@ -8,6 +10,10 @@
         string Name { get; }
 
         string Value { get; }
+
+        long Version { get; }
+
+        Guid CommitId { get; }
     }
 
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using expense.web.api.Values.Aggregate.Events.Base;
 using expense.web.api.Values.Aggregate.Events.Root;
 using expense.web.api.Values.Aggregate.Model;
@@ -25,6 +26,8 @@ namespace expense.web.api.Values.Aggregate
         public string Value { get; private set; }
 
         public Guid CommitId { get; set; }
+
+        public IList<ValueCommentAggregateChild> Comments { get; set; }
 
         // this constructor is used in generic reconstruction of this class by repositories
         public ValuesRootAggregate()
@@ -110,7 +113,7 @@ namespace expense.web.api.Values.Aggregate
             if (value <= 0)
                 throw new ArgumentNullException();
         }
-
+        
         /// <summary>
         /// Apply event performs two operations
         /// 1. Adds the event to the list of uncommitted events

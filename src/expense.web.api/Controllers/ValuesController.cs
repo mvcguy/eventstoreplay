@@ -62,7 +62,6 @@ namespace expense.web.api.Controllers
                     Name = request.Name.Value,
                     Code = request.Code.Value,
                     Value = request.Value.Value
-
                 }
             };
 

@@ -11,7 +11,7 @@ namespace expense.web.api.Values.Aggregate.Events.Childs.Comment
             
         }
 
-        public CommentLikedEvent(IValueCommentChildAggregateDataModel model)
+        public CommentLikedEvent(IValueCommentAggregateChildDataModel model)
             : base(model,
                 CommentAggConstants.EventType.CommentLiked,
                 typeof(CommentLikedEvent).AssemblyQualifiedName)
