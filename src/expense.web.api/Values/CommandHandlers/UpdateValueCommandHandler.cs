@@ -4,23 +4,22 @@ using System.Threading.Tasks;
 using expense.web.api.Values.Aggregate;
 using expense.web.api.Values.Aggregate.Repository;
 using expense.web.api.Values.Commands;
+using expense.web.api.Values.Commands.Value;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace expense.web.api.Values.CommandHandlers
 {
-    public class UpdateValueCommandHandler : IRequestHandler<UpdateValueCommand, ValueCommandResponse>
+    public class UpdateValueCommandHandler : BaseCommandHandler<ValuesRootAggregate, UpdateValueCommandHandler,
+        UpdateValueCommand, ValueCommandResponse>
     {
-        private readonly IRepository<ValuesRootAggregate> _rootAggregateRepository;
-        private readonly ILogger<UpdateValueCommandHandler> _logger;
-
-        public UpdateValueCommandHandler(IRepository<ValuesRootAggregate> rootAggregateRepository, ILogger<UpdateValueCommandHandler> logger)
+        public UpdateValueCommandHandler(IRepository<ValuesRootAggregate> repository,
+            ILogger<UpdateValueCommandHandler> logger) : base(repository, logger)
         {
-            _rootAggregateRepository = rootAggregateRepository;
-            _logger = logger;
         }
 
-        public async Task<ValueCommandResponse> Handle(UpdateValueCommand request, CancellationToken cancellationToken)
+        public override async Task<ValueCommandResponse> Handle(UpdateValueCommand command,
+            CancellationToken cancellationToken)
         {
             var result = new ValueCommandResponse();
 
@@ -30,7 +29,7 @@ namespace expense.web.api.Values.CommandHandlers
             {
                 try
                 {
-                    var aggregate = _rootAggregateRepository.GetById(request.Id);
+                    var aggregate = Repository.GetById(command.Id);
 
                     if (aggregate == null)
                     {
@@ -39,28 +38,29 @@ namespace expense.web.api.Values.CommandHandlers
                         return;
                     }
 
-                    if (aggregate.Version != request.Version)
+                    if (aggregate.Version != command.Version)
                     {
                         result.Success = false;
-                        result.Message = "Aggregate version mismatch. Please check that you are passing the correct aggregate version.";
+                        result.Message =
+                            "Aggregate version mismatch. Please check that you are passing the correct aggregate version.";
                         return;
                     }
 
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    if (request.UpdateCodeCmd != null)
+                    if (command.UpdateCodeCmd != null)
                     {
-                        aggregate.ChangeCode(request.UpdateCodeCmd.Code);
+                        aggregate.ChangeCode(command.UpdateCodeCmd.Code);
                     }
 
-                    if (request.UpdateNameCmd != null)
+                    if (command.UpdateNameCmd != null)
                     {
-                        aggregate.ChangeName(request.UpdateNameCmd.Name);
+                        aggregate.ChangeName(command.UpdateNameCmd.Name);
                     }
 
-                    if (request.UpdateValueCmd != null)
+                    if (command.UpdateValueCmd != null)
                     {
-                        aggregate.ChangeValue(request.UpdateValueCmd.Value);
+                        aggregate.ChangeValue(command.UpdateValueCmd.Value);
                     }
 
                     cancellationToken.ThrowIfCancellationRequested();
@@ -68,12 +68,12 @@ namespace expense.web.api.Values.CommandHandlers
                     aggregate.Save();
 
                     result.Success = true;
-                    result.ValuesRootAggregateModel = aggregate;
+                    result.Model = aggregate;
 
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e.Message, e);
+                    Logger.LogError(e.Message, e);
                     result.Success = false;
                     result.Message = $"{e.Message} {Environment.NewLine} {e.StackTrace}";
                 }
@@ -84,5 +84,6 @@ namespace expense.web.api.Values.CommandHandlers
 
             return result;
         }
+
     }
 }

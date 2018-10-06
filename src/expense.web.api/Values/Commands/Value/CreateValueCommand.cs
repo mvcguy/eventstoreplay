@@ -1,6 +1,8 @@
-﻿namespace expense.web.api.Values.Commands
+﻿using MediatR;
+
+namespace expense.web.api.Values.Commands.Value
 {
-    public class ValueCommandRequest
+    public class CreateValueCommand : IRequest<ValueCommandResponse>
     {
         public string Name { get; set; }
 

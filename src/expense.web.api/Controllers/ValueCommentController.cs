@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using expense.web.api.Values.Aggregate;
+using expense.web.api.Values.Aggregate.Repository;
+using expense.web.api.Values.Commands.Comments;
 using expense.web.api.Values.Dtos;
-using Microsoft.AspNetCore.Http;
+using expense.web.api.Values.ReadModel;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace expense.web.api.Controllers
@@ -12,31 +15,57 @@ namespace expense.web.api.Controllers
     [ApiController]
     public class ValueCommentController : ControllerBase
     {
-        // GET: api/ValueComment
-        [HttpGet]
-        public IEnumerable<string> Get()
+        private readonly IMediator _mediator;
+        private readonly IRepository<ValuesRootAggregate> _rootAggregateRepository;
+        private readonly IReadModelRepository<ValueRecord> _readModelRepository;
+
+        public ValueCommentController(IMediator mediator, 
+            IRepository<ValuesRootAggregate> rootAggregateRepository, 
+            IReadModelRepository<ValueRecord> readModelRepository)
         {
-            return new string[] { "value1", "value2" };
+            _mediator = mediator;
+            _rootAggregateRepository = rootAggregateRepository;
+            _readModelRepository = readModelRepository;
+        }
+
+        // GET: api/ValueComment
+        [HttpGet("{parentId}")]
+        public IActionResult Get(Guid? parentId)
+        {
+            return Ok(new List<CommentViewModel>());
         }
 
         // GET: api/ValueComment/5
-        [HttpGet("{id}", Name = "Get")]
-        public string Get(int id)
+        [HttpGet("{parentId}/{id}", Name = "Get")]
+        public IActionResult Get(Guid? parentId, Guid? id)
         {
-            return "value";
+            return Ok(new CommentViewModel());
         }
 
         // POST: api/ValueComment
-        [HttpPost]
-        public void Post([FromBody] CommentViewModel comment)
+        [HttpPost("{parentId}")]
+        public async Task<IActionResult> Post(Guid? parentId, [FromBody] CommentViewModel comment)
         {
 
+            var command = new AddCommentCommand
+            {
+                ParentId = parentId.GetValueOrDefault(),
+                ParentVersion = comment.ParentVersion.Value.GetValueOrDefault(),
+                CommentText = comment.CommentText.Value,
+                UserName = comment.UserName.Value,
+                TenantId = comment.TenantId.Value
+            };
+
+            var result = await _mediator.Send(command);
+
+            return Created($"~/api/valuecomment/{result.Model.ParentId}/{result.Model.Id}", result);
         }
 
         // PUT: api/ValueComment/5
         [HttpPut("{parentId}/{id}")]
-        public void Put(Guid? parentId, Guid? id, [FromBody] CommentViewModel comment)
+        public IActionResult Put(Guid? parentId, Guid? id, [FromBody] CommentViewModel comment)
         {
+            return Ok(comment);
         }
 
         // DELETE: api/ApiWithActions/5

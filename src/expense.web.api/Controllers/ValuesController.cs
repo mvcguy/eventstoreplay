@@ -6,6 +6,7 @@ using expense.web.api.Values.Aggregate;
 using expense.web.api.Values.Aggregate.Model;
 using expense.web.api.Values.Aggregate.Repository;
 using expense.web.api.Values.Commands;
+using expense.web.api.Values.Commands.Value;
 using expense.web.api.Values.Dtos;
 using expense.web.api.Values.ReadModel;
 using MediatR;
@@ -56,20 +57,17 @@ namespace expense.web.api.Controllers
 
             var createCommand = new CreateValueCommand
             {
-                Request = new ValueCommandRequest()
-                {
-                    TenantId = request.TenantId?.Value,
-                    Name = request.Name.Value,
-                    Code = request.Code.Value,
-                    Value = request.Value.Value
-                }
+                TenantId = request.TenantId?.Value,
+                Name = request.Name.Value,
+                Code = request.Code.Value,
+                Value = request.Value.Value
             };
 
             var result = await _mediator.Send(createCommand);
 
             if (result.Success)
             {
-                var vm = ToViewModel(result.ValuesRootAggregateModel);
+                var vm = ToViewModel(result.Model);
                 return Created($"~/api/values/{vm.Id}", vm);
             }
             else
@@ -105,7 +103,7 @@ namespace expense.web.api.Controllers
 
             if (result.Success)
             {
-                var updatedVm = ToViewModel(result.ValuesRootAggregateModel);
+                var updatedVm = ToViewModel(result.Model);
                 return Ok(updatedVm);
             }
             else

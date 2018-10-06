@@ -12,8 +12,6 @@ namespace expense.web.api.Values.Aggregate.Model
         string Value { get; }
 
         long Version { get; }
-
-        Guid CommitId { get; }
     }
 
 }

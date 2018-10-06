@@ -18,7 +18,7 @@ namespace expense.web.api.Values.Aggregate.Events.Childs.Comment
                 CommentAggConstants.EventType.CommentTextChanged,
                 typeof(CommentTextChangedEvent).AssemblyQualifiedName)
         {
-            this.Comment = model.Comment;
+            this.Comment = model.CommentText;
         }
     }
 }

@@ -6,9 +6,11 @@ namespace expense.web.api.Values.Aggregate.Model
     {
         Guid ParentId { get; }
 
+        long ParentVersion { get; }
+        
         string UserName { get; }
 
-        string Comment { get; }
+        string CommentText { get; }
 
         int Likes { get; }
 

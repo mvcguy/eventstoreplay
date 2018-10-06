@@ -13,9 +13,11 @@ namespace expense.web.api.Values.Aggregate
         /// </summary>
         public Guid ParentId { get; }
 
+        public long ParentVersion { get; private set; }
+
         public string UserName { get; private set; }
 
-        public string Comment { get; private set; }
+        public string CommentText { get; private set; }
 
         public int Likes { get; private set; }
 
@@ -42,8 +44,9 @@ namespace expense.web.api.Values.Aggregate
         public void AddComment(IValueCommentAggregateChildDataModel model, bool applyEvent = true)
         {
             // when a comment is first added, we don't need to fire individual events
-            ChangeCommentText(model.Comment, applyEvent: false);
+            ChangeCommentText(model.CommentText, applyEvent: false);
             ChangeCommentUser(model.UserName, applyEvent: false);
+            ChangeTenantId(model.TenantId);
 
             if (!applyEvent) return;
 
@@ -52,7 +55,7 @@ namespace expense.web.api.Values.Aggregate
 
         public void ChangeCommentText(string text, bool applyEvent = true)
         {
-            this.Comment = text;
+            this.CommentText = text;
 
             if (!applyEvent) return;
 
@@ -65,8 +68,16 @@ namespace expense.web.api.Values.Aggregate
 
             if (!applyEvent) return;
 
-            // Are we updating username beside when the comment is first time created?
+            // We are not updating username beside when its first created,
+            // no need to apply event
         }
+
+        public void ChangeTenantId(int tenantId)
+        {
+            this.TenantId = tenantId;
+        }
+
+
 
         public void CommentLiked(bool applyEvent = true)
         {
@@ -105,6 +116,8 @@ namespace expense.web.api.Values.Aggregate
                 default:
                     throw new ArgumentOutOfRangeException(nameof(eventType), eventType, null);
             }
+
+            ParentVersion = _root.Version;
         }
     }
 }

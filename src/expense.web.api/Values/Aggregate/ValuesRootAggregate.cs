@@ -27,8 +27,6 @@ namespace expense.web.api.Values.Aggregate
 
         public Guid CommitId { get; set; }
 
-        public IList<ValueCommentAggregateChild> Comments { get; set; }
-
         // this constructor is used in generic reconstruction of this class by repositories
         public ValuesRootAggregate()
         {
@@ -102,6 +100,13 @@ namespace expense.web.api.Values.Aggregate
             this.ApplyEvent(ValueEventType.ValueChanged);
         }
 
+        public ValueCommentAggregateChild AddComment(IValueCommentAggregateChildDataModel model)
+        {
+            var comment = new ValueCommentAggregateChild(this);
+            comment.AddComment(model, applyEvent: true);
+            return comment;
+        }
+
         private void ThrowIfNullOrEmpty(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -113,7 +118,7 @@ namespace expense.web.api.Values.Aggregate
             if (value <= 0)
                 throw new ArgumentNullException();
         }
-        
+
         /// <summary>
         /// Apply event performs two operations
         /// 1. Adds the event to the list of uncommitted events
