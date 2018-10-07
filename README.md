@@ -1,4 +1,4 @@
-# eventstoreplay
+# EventStore and DDD play by play
 A play project to demonstrate DDD (Domain driven design) using EventStore.
 
 The goal is to create a microservice with a simple aggregate and an aggregate child. The hypothetical aggregate in this is called 'ValueAggregate' with a child called 'ValueComments'. They hold a one-to-many relationship.
