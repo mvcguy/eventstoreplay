@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using expense.web.api.Values.Aggregate;
 using expense.web.api.Values.Aggregate.Repository;
@@ -14,14 +15,14 @@ namespace expense.web.api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ValueCommentController : ControllerBase
+    public class ValueCommentController : ValuesBaseController
     {
         private readonly IMediator _mediator;
         private readonly IRepository<ValuesRootAggregate> _rootAggregateRepository;
         private readonly IReadModelRepository<ValueRecord> _readModelRepository;
 
-        public ValueCommentController(IMediator mediator, 
-            IRepository<ValuesRootAggregate> rootAggregateRepository, 
+        public ValueCommentController(IMediator mediator,
+            IRepository<ValuesRootAggregate> rootAggregateRepository,
             IReadModelRepository<ValueRecord> readModelRepository)
         {
             _mediator = mediator;
@@ -29,25 +30,35 @@ namespace expense.web.api.Controllers
             _readModelRepository = readModelRepository;
         }
 
-        // GET: api/ValueComment
+        // GET: api/ValueComment/{parentID: GUID}
         [HttpGet("{parentId}")]
-        public IActionResult Get(Guid? parentId)
+        public async Task<IActionResult> Get(Guid? parentId)
         {
-            return Ok(new List<CommentViewModel>());
+            // get all the comments for the parentId
+            var aggregate = await _readModelRepository.GetByAggregateId(parentId.GetValueOrDefault());
+            if (aggregate == null) return BadRequest();
+
+            return Ok(aggregate.Comments.Select(x => ToViewModel(x, aggregate.Version, aggregate.TenantId)));
         }
 
-        // GET: api/ValueComment/5
+        // GET: api/ValueComment/{parentId:GUID}/{commentId:GUID}
         [HttpGet("{parentId}/{id}", Name = "Get")]
-        public IActionResult Get(Guid? parentId, Guid? id)
+        public async Task<IActionResult> Get(Guid? parentId, Guid? id)
         {
-            return Ok(new CommentViewModel());
+            // BUG: Bad idea to lead all the comments first and then search for the required one. find alternative!!!
+
+            var aggregate = await _readModelRepository.GetByAggregateId(parentId.GetValueOrDefault());
+            if (aggregate == null) return BadRequest();
+
+            var comment = aggregate.Comments.FirstOrDefault(x => x.PublicId == id);
+            if (comment == null) return BadRequest();
+            return Ok(ToViewModel(comment, aggregate.Version, aggregate.TenantId));
         }
 
-        // POST: api/ValueComment
+        // POST: api/ValueComment/{parentId:GUID}
         [HttpPost("{parentId}")]
         public async Task<IActionResult> Post(Guid? parentId, [FromBody] CommentViewModel comment)
         {
-
             var command = new AddCommentCommand
             {
                 ParentId = parentId.GetValueOrDefault(),
@@ -62,16 +73,26 @@ namespace expense.web.api.Controllers
             return Created($"~/api/valuecomment/{result.Model.ParentId}/{result.Model.Id}", result);
         }
 
-        // PUT: api/ValueComment/5
+        // PUT: api/ValueComment/{parentID: GUID}/{commentID: GUID}
         [HttpPut("{parentId}/{id}")]
-        public IActionResult Put(Guid? parentId, Guid? id, [FromBody] CommentViewModel comment)
+        public async Task<IActionResult> Put(Guid? parentId, Guid? id, [FromBody] CommentViewModel comment)
         {
-            return Ok(comment);
+            var command = new UpdateCommentCommand
+            {
+                ParentId = parentId.GetValueOrDefault(),
+                Id = id.GetValueOrDefault(),
+                ParentVersion = comment.ParentVersion.Value.GetValueOrDefault(),
+                UpdateCommentTextCmd = new UpdateCommentTextChildCmd(comment.CommentText.Value)
+            };
+
+            var result = await _mediator.Send(command);
+
+            return Ok(result);
         }
 
-        // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        // DELETE: api/ValueComment/{parentID: GUID}/{commentID: GUID}
+        [HttpDelete("{parentId}/{id}")]
+        public void Delete(Guid? parentId, Guid? id)
         {
         }
     }

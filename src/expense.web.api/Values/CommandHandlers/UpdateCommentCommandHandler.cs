@@ -1,23 +1,23 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using expense.web.api.Values.Aggregate;
-using expense.web.api.Values.Aggregate.Model;
 using expense.web.api.Values.Aggregate.Repository;
 using expense.web.api.Values.Commands.Comments;
 using Microsoft.Extensions.Logging;
 
 namespace expense.web.api.Values.CommandHandlers
 {
-    public class AddCommentCommandHandler
-        : BaseCommandHandler<ValuesRootAggregate,
-            AddCommentCommandHandler, AddCommentCommand, CommentCommandResponse>
+    public class UpdateCommentCommandHandler: BaseCommandHandler<ValuesRootAggregate, UpdateCommentCommandHandler,
+        UpdateCommentCommand, CommentCommandResponse>
     {
-        public AddCommentCommandHandler(IRepository<ValuesRootAggregate> repository, ILogger<AddCommentCommandHandler> logger) : base(repository, logger)
+        public UpdateCommentCommandHandler(IRepository<ValuesRootAggregate> repository, ILogger<UpdateCommentCommandHandler> logger) 
+            : base(repository, logger)
         {
         }
 
-        public override async Task<CommentCommandResponse> Handle(AddCommentCommand command, CancellationToken cancellationToken)
+        public override async Task<CommentCommandResponse> Handle(UpdateCommentCommand command, CancellationToken cancellationToken)
         {
             var result = new CommentCommandResponse();
 
@@ -43,11 +43,10 @@ namespace expense.web.api.Values.CommandHandlers
                         return;
                     }
 
-                    var comment = aggregate.AddComment(new ValueCommentAggregateChildDataModel
-                    {
-                        CommentText = command.CommentText,
-                        UserName = command.UserName
-                    });
+                    // a comment must exist before it can be updated!!!
+                    var comment = aggregate.Comments.First(x => x.Id == command.Id && x.ParentId == command.ParentId);
+
+                    comment.ChangeCommentText(command.UpdateCommentTextCmd.CommentText);
 
                     aggregate.Save();
                     result.Success = true;

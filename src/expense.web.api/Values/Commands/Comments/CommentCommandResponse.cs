@@ -3,7 +3,7 @@ using expense.web.api.Values.Commands.Value;
 
 namespace expense.web.api.Values.Commands.Comments
 {
-    public class AddCommentCommandResponse : CommandResponseBase
+    public class CommentCommandResponse : CommandResponseBase
     {
         public IValueCommentAggregateChildDataModel Model { get; set; }
     }

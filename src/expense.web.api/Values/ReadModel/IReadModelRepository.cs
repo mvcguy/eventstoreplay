@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +22,8 @@ namespace expense.web.api.Values.ReadModel
             CancellationToken cancellationToken = default(CancellationToken));
 
         Task<TEntity> GetByIdAsync(object id, CancellationToken cancellationToken = default(CancellationToken));
+
+        Task<TEntity> GetByAggregateId(Guid id, CancellationToken cancellationToken = default(CancellationToken));
 
         IQueryable<TEntity> GetAll();
 

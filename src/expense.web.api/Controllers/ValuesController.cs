@@ -17,7 +17,7 @@ namespace expense.web.api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ValuesController : ControllerBase
+    public class ValuesController : ValuesBaseController
     {
         private readonly IMediator _mediator;
         private readonly IRepository<ValuesRootAggregate> _rootAggregateRepository;
@@ -43,6 +43,7 @@ namespace expense.web.api.Controllers
         [HttpGet("{id}/{version?}")]
         public IActionResult Get(Guid id, long? version = null)
         {
+            // TODO: Use mongo db instead of reading from eventstore.
             var aggregate = _rootAggregateRepository.GetById(id, version.GetValueOrDefault());
             if (aggregate == null) return NotFound("Item not found");
 
@@ -117,47 +118,6 @@ namespace expense.web.api.Controllers
         {
         }
 
-        public ValueViewModel ToViewModel(ValueRecord record)
-        {
-            return new ValueViewModel()
-            {
-                Id = record.PublicId,
-                TenantId = new DtoProp<int?>(record.TenantId),
-                Name = new DtoProp<string>(record.Name),
-                Code = new DtoProp<string>(record.Code),
-                Value = new DtoProp<string>(record.Value),
-                Version = new DtoProp<long?>(record.Version)
-            };
-        }
-
-        public ValueViewModel ToViewModel(IValuesRootAggregateDataModel aggregate)
-        {
-            return new ValueViewModel()
-            {
-                Id = aggregate.Id,
-                TenantId = new DtoProp<int?>(aggregate.TenantId),
-                Name = new DtoProp<string>(aggregate.Name),
-                Code = new DtoProp<string>(aggregate.Code),
-                Value = new DtoProp<string>(aggregate.Value),
-                Version = new DtoProp<long?>(aggregate.Version),
-                Comments = aggregate.Comments.Select(ToViewModel)
-            };
-        }
-
-        public CommentViewModel ToViewModel(IValueCommentAggregateChildDataModel comment)
-        {
-            return new CommentViewModel
-            {
-                Id = comment.Id,
-                UserName = new DtoProp<string>(comment.UserName),
-                ParentVersion = new DtoProp<long?>(comment.ParentVersion),
-                ParentId = comment.ParentId,
-                TenantId = new DtoProp<int?>(comment.TenantId),
-                CommentText = new DtoProp<string>(comment.CommentText),
-                Dislikes = new DtoProp<int?>(comment.Dislikes),
-                Likes = new DtoProp<int?>(comment.Likes)
-            };
-        }
     }
 
 

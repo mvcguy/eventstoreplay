@@ -109,7 +109,7 @@ namespace expense.web.api.Values.Aggregate
 
         public ValueCommentAggregateChild AddComment(IValueCommentAggregateChildDataModel model, bool applyEvent = true)
         {
-            var comment = new ValueCommentAggregateChild(this);
+            var comment = new ValueCommentAggregateChild(this, model.Id);
             comment.AddComment(model, applyEvent);
             return comment;
         }
@@ -200,6 +200,7 @@ namespace expense.web.api.Values.Aggregate
                 CommentText = @event.CommentText,
                 UserName = @event.UserName,
                 TenantId = @event.TenantId,
+                Id = @event.Id
             };
 
             var comment = this.AddComment(model, applyEvent: false);

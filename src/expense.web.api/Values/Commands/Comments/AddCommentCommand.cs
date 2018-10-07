@@ -5,7 +5,7 @@ using MediatR;
 
 namespace expense.web.api.Values.Commands.Comments
 {
-    public class AddCommentCommand : IRequest<AddCommentCommandResponse>
+    public class AddCommentCommand : IRequest<CommentCommandResponse>
     {
         public long ParentVersion { get; set; }
 

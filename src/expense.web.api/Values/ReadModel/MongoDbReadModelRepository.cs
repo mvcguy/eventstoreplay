@@ -100,6 +100,18 @@ namespace expense.web.api.Values.ReadModel
             return doc.FirstOrDefault();
         }
 
+        public async Task<TEntity> GetByAggregateId(Guid id, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (id == null)
+                throw new ArgumentNullException(nameof(id));
+
+            var filter = Builders<TEntity>.Filter.Eq(x => x.PublicId, id);
+            var doc = await Collection.Find(filter).ToListAsync(cancellationToken: cancellationToken);
+            return doc.FirstOrDefault();
+        }
+
         public IQueryable<TEntity> GetAll()
         {
             return Collection.AsQueryable();
