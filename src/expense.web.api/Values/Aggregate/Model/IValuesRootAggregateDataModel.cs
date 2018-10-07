@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace expense.web.api.Values.Aggregate.Model
 {
     // root aggregate
-    public interface IValuesRootAggregateModel : IAggregateModel
+    public interface IValuesRootAggregateDataModel : IAggregateModel
     {
         string Code { get; }
 
@@ -12,6 +13,8 @@ namespace expense.web.api.Values.Aggregate.Model
         string Value { get; }
 
         long Version { get; }
+
+        IList<ValueCommentAggregateChild> Comments { get; }
     }
 
 }

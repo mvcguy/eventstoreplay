@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using expense.web.api.Values.Aggregate.Events.Base;
+using expense.web.api.Values.Aggregate.Events.Childs.Comment;
 using expense.web.api.Values.Aggregate.Events.Root;
 using expense.web.api.Values.Aggregate.Model;
 using expense.web.api.Values.Aggregate.Repository;
@@ -8,7 +10,7 @@ using expense.web.eventstore.EventStoreDataContext;
 
 namespace expense.web.api.Values.Aggregate
 {
-    public class ValuesRootAggregate : AggregateBase<EventModel>, IValuesRootAggregateModel
+    public class ValuesRootAggregate : AggregateBase<EventModel>, IValuesRootAggregateDataModel
     {
 
         // Notes:
@@ -27,6 +29,8 @@ namespace expense.web.api.Values.Aggregate
 
         public Guid CommitId { get; set; }
 
+        public IList<ValueCommentAggregateChild> Comments { get; set; }
+
         // this constructor is used in generic reconstruction of this class by repositories
         public ValuesRootAggregate()
         {
@@ -44,6 +48,7 @@ namespace expense.web.api.Values.Aggregate
             this.Version = version;
             _rootAggregateRepository = rootAggregateRepository;
             this.CommitId = Guid.NewGuid();
+            this.Comments = new List<ValueCommentAggregateChild>();
         }
 
         public bool Save()
@@ -51,7 +56,7 @@ namespace expense.web.api.Values.Aggregate
             return _rootAggregateRepository.Save(this);
         }
 
-        public void CreateValue(IValuesRootAggregateModel model)
+        public void CreateValue(IValuesRootAggregateDataModel model, bool applyEvent = true)
         {
             // Note: We want to modify the props using there methods, to keep the business logic in one place
             // Also we don't want to fire individual prop changed events when an aggregate is created first time
@@ -61,6 +66,8 @@ namespace expense.web.api.Values.Aggregate
             ChangeName(model.Name, applyEvent: false);
             ChangeCode(model.Code, applyEvent: false);
             ChangeValue(model.Value, applyEvent: false);
+
+            if (!applyEvent) return;
 
             ApplyEvent(ValueEventType.ValueCreated);
         }
@@ -100,10 +107,10 @@ namespace expense.web.api.Values.Aggregate
             this.ApplyEvent(ValueEventType.ValueChanged);
         }
 
-        public ValueCommentAggregateChild AddComment(IValueCommentAggregateChildDataModel model)
+        public ValueCommentAggregateChild AddComment(IValueCommentAggregateChildDataModel model, bool applyEvent = true)
         {
             var comment = new ValueCommentAggregateChild(this);
-            comment.AddComment(model, applyEvent: true);
+            comment.AddComment(model, applyEvent);
             return comment;
         }
 
@@ -148,33 +155,74 @@ namespace expense.web.api.Values.Aggregate
 
         #region ReconstructAggregate
 
+        // Notes: When we reconstruct aggregate from events, we don't want to set the applyflag to false,
+        // Its significant only when we want to persist and increment the version of aggregate
+        // to achieve consistency!
+
         public void Handle(ValueCreatedEvent @event)
         {
             CheckEvent(@event);
 
-            this.Code = @event.Code;
-            this.Name = @event.Name;
-            this.TenantId = @event.TenantId;
-            this.Value = @event.Value;
+            var model = new ValuesRootAggregateDataModel
+            {
+                TenantId = @event.TenantId,
+                Name = @event.Name,
+                Code = @event.Code,
+                Value = @event.Value,
+            };
+
+            this.CreateValue(model, applyEvent: false);
         }
 
         public void Handle(NameChangedEvent @event)
         {
             CheckEvent(@event);
-            this.Name = @event.Name;
+            this.ChangeName(@event.Name);
         }
 
         public void Handle(ValueChangedEvent @event)
         {
             CheckEvent(@event);
-            this.Value = @event.Value;
+            this.ChangeValue(@event.Value);
         }
 
         public void Handle(CodeChangedEvent @event)
         {
             CheckEvent(@event);
-            this.Code = @event.Code;
+            this.ChangeCode(@event.Code);
 
+        }
+
+        public void Handle(CommentAddedEvent @event)
+        {
+            var model = new ValueCommentAggregateChildDataModel
+            {
+                CommentText = @event.CommentText,
+                UserName = @event.UserName,
+                TenantId = @event.TenantId,
+            };
+
+            var comment = this.AddComment(model, applyEvent: false);
+            this.Comments.Add(comment);
+        }
+
+        public void Handle(CommentTextChangedEvent @event)
+        {
+            // comment text can only be changed, if a comment is added already, same goes for other props!
+            var comment = this.Comments.First(x => x.Id == @event.Id);
+            comment.ChangeCommentText(@event.CommentText, applyEvent: false);
+        }
+
+        public void Handle(CommentLikedEvent @event)
+        {
+            var comment = this.Comments.First(x => x.Id == @event.Id);
+            comment.CommentLiked(applyEvent: false);
+        }
+
+        public void Handle(CommentDislikedEvent @event)
+        {
+            var comment = this.Comments.First(x => x.Id == @event.Id);
+            comment.CommendDisliked(applyEvent: false);
         }
 
         public void CheckEvent(EventBase @event)

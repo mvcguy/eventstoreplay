@@ -2,6 +2,7 @@
 using expense.web.api.Values.Aggregate;
 using expense.web.api.Values.Aggregate.Repository;
 using expense.web.api.Values.ReadModel;
+using expense.web.api.Values.ReadModel.Schema;
 using expense.web.eventstore.EventStoreDataContext;
 using expense.web.eventstore.EventStoreSubscriber;
 using expense.web.eventstore.StoreConnection;

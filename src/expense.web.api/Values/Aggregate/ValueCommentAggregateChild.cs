@@ -39,6 +39,7 @@ namespace expense.web.api.Values.Aggregate
             this.ParentId = root.Id;
             this.CommitId = root.CommitId;
             this.Id = id ?? Guid.NewGuid();
+            this.ParentVersion = root.Version;
         }
 
         public void AddComment(IValueCommentAggregateChildDataModel model, bool applyEvent = true)

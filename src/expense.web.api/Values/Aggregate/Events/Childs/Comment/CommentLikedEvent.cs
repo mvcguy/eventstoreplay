@@ -1,4 +1,5 @@
-﻿using expense.web.api.Values.Aggregate.Constants;
+﻿using System;
+using expense.web.api.Values.Aggregate.Constants;
 using expense.web.api.Values.Aggregate.Events.Base;
 using expense.web.api.Values.Aggregate.Model;
 
@@ -6,6 +7,8 @@ namespace expense.web.api.Values.Aggregate.Events.Childs.Comment
 {
     public class CommentLikedEvent : EventBase
     {
+
+        public Guid ParentId { get; set; }
         public CommentLikedEvent()
         {
             
@@ -15,6 +18,8 @@ namespace expense.web.api.Values.Aggregate.Events.Childs.Comment
             : base(model,
                 CommentAggConstants.EventType.CommentLiked,
                 typeof(CommentLikedEvent).AssemblyQualifiedName)
-        { }
+        {
+            this.ParentId = model.ParentId;
+        }
     }
 }

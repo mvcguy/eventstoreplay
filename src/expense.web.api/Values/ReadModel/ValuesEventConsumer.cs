@@ -1,15 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using expense.web.api.Values.Aggregate.Constants;
 using expense.web.api.Values.Aggregate.Events.Base;
+using expense.web.api.Values.Aggregate.Events.Childs.Comment;
 using expense.web.api.Values.Aggregate.Events.Root;
+using expense.web.api.Values.ReadModel.Schema;
 using expense.web.eventstore.EventStoreDataContext;
 using expense.web.eventstore.EventStoreSubscriber;
 using EventStore.ClientAPI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Newtonsoft.Json;
 
@@ -44,7 +48,7 @@ namespace expense.web.api.Values.ReadModel
 
         public override void OnEvent(EventModel @event)
         {
-            
+
             var metaDataJson = Encoding.UTF8.GetString(@event.Metadata);
             var eventDataJson = Encoding.UTF8.GetString(@event.Data);
 
@@ -64,6 +68,20 @@ namespace expense.web.api.Values.ReadModel
                     break;
                 case ValueAggregateConstants.EventTypes.ValueChanged:
                     Handle(JsonConvert.DeserializeObject<ValueChangedEvent>(eventDataJson), eventDataJson, @event, eventMetaData);
+                    break;
+
+                // comments (aggregate child)
+                case CommentAggConstants.EventType.CommentAdded:
+                    Handle(JsonConvert.DeserializeObject<CommentAddedEvent>(eventDataJson), eventDataJson, @event, eventMetaData);
+                    break;
+                case CommentAggConstants.EventType.CommentTextChanged:
+                    Handle(JsonConvert.DeserializeObject<CommentTextChangedEvent>(eventDataJson), eventDataJson, @event, eventMetaData);
+                    break;
+                case CommentAggConstants.EventType.CommentLiked:
+                    Handle(JsonConvert.DeserializeObject<CommentLikedEvent>(eventDataJson), eventDataJson, @event, eventMetaData);
+                    break;
+                case CommentAggConstants.EventType.CommentDisliked:
+                    Handle(JsonConvert.DeserializeObject<CommentDislikedEvent>(eventDataJson), eventDataJson, @event, eventMetaData);
                     break;
                 default:
                     _logger.LogInformation($"Unknown event type: {@event.EventType}, Payload: {eventDataJson}");
@@ -98,7 +116,7 @@ namespace expense.web.api.Values.ReadModel
                             UpdateReadPointer(@event.SequenceNumber, session);
                             break;
                     }
-                    ThrowIfThereIsHole(@event,_currentValueRecord.PublicId.GetValueOrDefault());
+                    ThrowIfThereIsHole(@event, _currentValueRecord.PublicId.GetValueOrDefault());
                     session.CommitTransaction();
                     _logger.LogInformation($"Event {@event.EventType} is successfully handled and persisted to database");
 
@@ -111,6 +129,85 @@ namespace expense.web.api.Values.ReadModel
                 }
             }
 
+        }
+
+        private void Handle(CommentDislikedEvent commentDislikedEvent, string eventDataJson, EventModel @event, EventMetaData eventMetaData)
+        {
+            _logger.LogInformation($"Handling {nameof(CommentTextChangedEvent)} .... {Environment.NewLine} {eventDataJson}");
+
+            _operation = DatabaseOperation.Update;
+            _currentValueRecord = GetRecord(commentDislikedEvent.ParentId);
+
+            ThrowIfRecordIsNull(commentDislikedEvent, _currentValueRecord);
+
+            // there must exist a comment record already before we can update it!
+            var comment = _currentValueRecord.Comments.First(x => x.PublicId == commentDislikedEvent.Id);
+
+            comment.Dislikes += 1;
+
+            UpdateCommonFields(@event, eventMetaData);
+        }
+
+        private void Handle(CommentLikedEvent commentLikedEvent, string eventDataJson, EventModel @event, EventMetaData eventMetaData)
+        {
+            _logger.LogInformation($"Handling {nameof(CommentTextChangedEvent)} .... {Environment.NewLine} {eventDataJson}");
+
+            _operation = DatabaseOperation.Update;
+            _currentValueRecord = GetRecord(commentLikedEvent.ParentId);
+
+            ThrowIfRecordIsNull(commentLikedEvent, _currentValueRecord);
+
+            // there must exist a comment record already before we can update it!
+            var comment = _currentValueRecord.Comments.First(x => x.PublicId == commentLikedEvent.Id);
+
+            comment.Likes += 1;
+
+            UpdateCommonFields(@event, eventMetaData);
+        }
+
+        private void Handle(CommentTextChangedEvent commentTextChangedEvent, string eventDataJson, EventModel @event, EventMetaData eventMetaData)
+        {
+            _logger.LogInformation($"Handling {nameof(CommentTextChangedEvent)} .... {Environment.NewLine} {eventDataJson}");
+
+            _operation = DatabaseOperation.Update;
+            _currentValueRecord = GetRecord(commentTextChangedEvent.ParentId);
+
+            ThrowIfRecordIsNull(commentTextChangedEvent, _currentValueRecord);
+
+            // there must exist a comment record already before we can update it!
+            var comment = _currentValueRecord.Comments.First(x => x.PublicId == commentTextChangedEvent.Id);
+
+            comment.CommentText = commentTextChangedEvent.CommentText;
+
+            UpdateCommonFields(@event, eventMetaData);
+        }
+
+        private void Handle(CommentAddedEvent commentAddedEvent, string eventDataJson, EventModel @event, EventMetaData eventMetaData)
+        {
+            _logger.LogInformation($"Handling {nameof(CommentAddedEvent)} .... {Environment.NewLine} {eventDataJson}");
+
+            _operation = DatabaseOperation.Update;
+            _currentValueRecord = GetRecord(commentAddedEvent.ParentId);
+
+            ThrowIfRecordIsNull(commentAddedEvent, _currentValueRecord);
+
+            if (_currentValueRecord.Comments == null)
+                _currentValueRecord.Comments = new List<ValueCommentRecord>();
+
+            _currentValueRecord.Comments.Add(new ValueCommentRecord
+            {
+                PublicId = commentAddedEvent.Id,
+                ParentId = commentAddedEvent.ParentId,
+                CommentText = commentAddedEvent.CommentText,
+                UserName = commentAddedEvent.UserName,
+                Likes = commentAddedEvent.Likes,
+                Dislikes = commentAddedEvent.Dislikes,
+                CreatedOn = DateTime.Now,
+                LastModifiedOn = DateTime.Now,
+                Id = ObjectId.GenerateNewId()
+            });
+
+            UpdateCommonFields(@event, eventMetaData);
         }
 
         protected override void Connected(EventStoreCatchUpSubscription eventStoreCatchUpSubscription)
@@ -189,7 +286,7 @@ namespace expense.web.api.Values.ReadModel
                 CommitId = metaData.CommitIdHeader,
                 CreatedOn = DateTime.Now,
                 LastModifiedOn = DateTime.Now,
-
+                Comments = new List<ValueCommentRecord>()
             };
         }
 
@@ -220,7 +317,7 @@ namespace expense.web.api.Values.ReadModel
 
         private void UpdateRecord(EventModel @event, IClientSessionHandle session)
         {
-            
+
             Task.Run(() => _valueRecordsRepository.UpdateAsync(_currentValueRecord, session)).Wait();
         }
 

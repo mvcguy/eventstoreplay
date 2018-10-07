@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text;
 using expense.web.api.Values.Aggregate.Constants;
+using expense.web.api.Values.Aggregate.Events.Childs.Comment;
 using expense.web.api.Values.Aggregate.Events.Root;
 using expense.web.eventstore.EventStoreDataContext;
 using Newtonsoft.Json;
@@ -64,6 +65,20 @@ namespace expense.web.api.Values.Aggregate.Repository
                         break;
                     case ValueAggregateConstants.EventTypes.ValueChanged:
                         aggregate.Handle(JsonConvert.DeserializeObject<ValueChangedEvent>(eventDataJson));
+                        break;
+                    
+                    // comments
+                    case CommentAggConstants.EventType.CommentAdded:
+                        aggregate.Handle(JsonConvert.DeserializeObject<CommentAddedEvent>(eventDataJson));
+                        break;
+                    case CommentAggConstants.EventType.CommentTextChanged:
+                        aggregate.Handle(JsonConvert.DeserializeObject<CommentTextChangedEvent>(eventDataJson));
+                        break;
+                    case CommentAggConstants.EventType.CommentLiked:
+                        aggregate.Handle(JsonConvert.DeserializeObject<CommentLikedEvent>(eventDataJson));
+                        break;
+                    case CommentAggConstants.EventType.CommentDisliked:
+                        aggregate.Handle(JsonConvert.DeserializeObject<CommentDislikedEvent>(eventDataJson));
                         break;
                     default:
                         break;

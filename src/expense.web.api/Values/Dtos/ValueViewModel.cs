@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using expense.web.api.Values.Attributes;
 
 namespace expense.web.api.Values.Dtos
@@ -23,5 +24,7 @@ namespace expense.web.api.Values.Dtos
         public DtoProp<string> Value { get; set; }
 
         public DtoProp<long?> Version { get; set; }
+
+        public IEnumerable<CommentViewModel> Comments { get; set; }
     }
 }

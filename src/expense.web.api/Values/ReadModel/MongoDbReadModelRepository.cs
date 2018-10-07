@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using expense.web.api.Values.ReadModel.Schema;
 using MongoDB.Driver;
 
 namespace expense.web.api.Values.ReadModel

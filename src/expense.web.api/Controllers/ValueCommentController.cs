@@ -6,6 +6,7 @@ using expense.web.api.Values.Aggregate.Repository;
 using expense.web.api.Values.Commands.Comments;
 using expense.web.api.Values.Dtos;
 using expense.web.api.Values.ReadModel;
+using expense.web.api.Values.ReadModel.Schema;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 

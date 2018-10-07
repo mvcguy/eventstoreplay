@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using expense.web.api.Values.ReadModel;
+using expense.web.api.Values.ReadModel.Schema;
 using expense.web.eventstore.EventStoreSubscriber;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;

@@ -13,7 +13,7 @@ namespace expense.web.api.Values.Aggregate.Events.Root
 
         }
 
-        public CodeChangedEvent(IValuesRootAggregateModel model) : base(model, 
+        public CodeChangedEvent(IValuesRootAggregateDataModel model) : base(model, 
             ValueAggregateConstants.EventTypes.CodeChanged, 
             typeof(CodeChangedEvent).AssemblyQualifiedName)
         {

@@ -14,7 +14,7 @@ namespace expense.web.api.Values.Aggregate.Events.Childs.Comment
 
         public int Likes { get; set; }
 
-        public string Comment { get; set; }
+        public string CommentText { get; set; }
 
         public Guid ParentId { get; set; }
 
@@ -29,7 +29,7 @@ namespace expense.web.api.Values.Aggregate.Events.Childs.Comment
                 typeof(CommentAddedEvent).AssemblyQualifiedName)
         {
             this.ParentId = model.ParentId;
-            this.Comment = model.CommentText;
+            this.CommentText = model.CommentText;
             this.Likes = model.Likes;
             this.Dislikes = model.Dislikes;
             this.UserName = model.UserName;

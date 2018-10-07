@@ -11,7 +11,7 @@ namespace expense.web.api.Values.Aggregate.Events.Root
 
         }
 
-        public ValueCreatedEvent(IValuesRootAggregateModel model) : base(model, ValueAggregateConstants.EventTypes.ValueCreated, 
+        public ValueCreatedEvent(IValuesRootAggregateDataModel model) : base(model, ValueAggregateConstants.EventTypes.ValueCreated, 
             typeof(ValueCreatedEvent).AssemblyQualifiedName)
         {
             Code = model.Code;

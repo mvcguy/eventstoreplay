@@ -9,6 +9,7 @@ using expense.web.api.Values.Commands;
 using expense.web.api.Values.Commands.Value;
 using expense.web.api.Values.Dtos;
 using expense.web.api.Values.ReadModel;
+using expense.web.api.Values.ReadModel.Schema;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -74,8 +75,6 @@ namespace expense.web.api.Controllers
             {
                 return BadRequest(new Dictionary<string, List<string>>() { { "Error", new List<string>() { result.Message } } });
             }
-
-
         }
 
         // PUT api/values/17aeed42-3aa7-42a6-a01e-00de257dbb91
@@ -131,7 +130,7 @@ namespace expense.web.api.Controllers
             };
         }
 
-        public ValueViewModel ToViewModel(IValuesRootAggregateModel aggregate)
+        public ValueViewModel ToViewModel(IValuesRootAggregateDataModel aggregate)
         {
             return new ValueViewModel()
             {
@@ -140,7 +139,23 @@ namespace expense.web.api.Controllers
                 Name = new DtoProp<string>(aggregate.Name),
                 Code = new DtoProp<string>(aggregate.Code),
                 Value = new DtoProp<string>(aggregate.Value),
-                Version = new DtoProp<long?>(aggregate.Version)
+                Version = new DtoProp<long?>(aggregate.Version),
+                Comments = aggregate.Comments.Select(ToViewModel)
+            };
+        }
+
+        public CommentViewModel ToViewModel(IValueCommentAggregateChildDataModel comment)
+        {
+            return new CommentViewModel
+            {
+                Id = comment.Id,
+                UserName = new DtoProp<string>(comment.UserName),
+                ParentVersion = new DtoProp<long?>(comment.ParentVersion),
+                ParentId = comment.ParentId,
+                TenantId = new DtoProp<int?>(comment.TenantId),
+                CommentText = new DtoProp<string>(comment.CommentText),
+                Dislikes = new DtoProp<int?>(comment.Dislikes),
+                Likes = new DtoProp<int?>(comment.Likes)
             };
         }
     }

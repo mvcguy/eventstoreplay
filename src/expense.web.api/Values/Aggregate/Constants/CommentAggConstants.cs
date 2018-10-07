@@ -7,7 +7,7 @@ namespace expense.web.api.Values.Aggregate.Constants
         public class EventType
         {
             public const string CommentAdded = nameof(CommentAddedEvent);
-            public const string CommentLiked = nameof(CommentAddedEvent);
+            public const string CommentLiked = nameof(CommentLiked);
             public const string CommentDisliked = nameof(CommentDislikedEvent);
             public const string CommentTextChanged = nameof(CommentTextChangedEvent);
         }
