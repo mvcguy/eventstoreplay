@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using expense.web.api.Values.Aggregate.Model;
+using expense.web.api.Values.Commands.Value;
 using expense.web.api.Values.Dtos;
 using expense.web.api.Values.ReadModel.Schema;
 using Microsoft.AspNetCore.Mvc;
@@ -66,5 +68,18 @@ namespace expense.web.api.Controllers
                 Likes = new DtoProp<int?>(comment.Likes)
             };
         }
+
+
+        protected IActionResult CreateBadRequestResult(CommandResponseBase result)
+        {
+            return BadRequest(new Dictionary<string, List<string>>() { { "Error", new List<string>() { result.Message } } });
+        }
+
+        protected IActionResult CreateInvalidRequestResult()
+        {
+            return BadRequest(new Dictionary<string, List<string>>()
+                {{"Error", new List<string>() {"The request is invalid"}}});
+        }
+
     }
 }

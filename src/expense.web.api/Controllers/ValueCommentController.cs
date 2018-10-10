@@ -70,7 +70,9 @@ namespace expense.web.api.Controllers
 
             var result = await _mediator.Send(command);
 
-            return Created($"~/api/valuecomment/{result.Model.ParentId}/{result.Model.Id}", result);
+            return result.Success 
+                ? Created($"~/api/valuecomment/{result.Model.ParentId}/{result.Model.Id}", ToViewModel(result.Model)) 
+                : CreateBadRequestResult(result);
         }
 
         // PUT: api/ValueComment/{parentID: GUID}/{commentID: GUID}
@@ -87,7 +89,9 @@ namespace expense.web.api.Controllers
 
             var result = await _mediator.Send(command);
 
-            return Ok(result);
+            return result.Success
+                ? Ok(ToViewModel(result.Model))
+                : CreateBadRequestResult(result);
         }
 
         // DELETE: api/ValueComment/{parentID: GUID}/{commentID: GUID}

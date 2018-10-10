@@ -74,9 +74,10 @@ namespace expense.web.api.Controllers
             }
             else
             {
-                return BadRequest(new Dictionary<string, List<string>>() { { "Error", new List<string>() { result.Message } } });
+                return CreateBadRequestResult(result);
             }
         }
+
 
         // PUT api/values/17aeed42-3aa7-42a6-a01e-00de257dbb91
         [HttpPut("{id}")]
@@ -86,7 +87,7 @@ namespace expense.web.api.Controllers
                 return BadRequest(ModelState);
 
             if (!id.HasValue || id == Guid.Empty || vm == null || vm.Version == null)
-                return BadRequest(new Dictionary<string, List<string>>() { { "Error", new List<string>() { "The request is invalid" } } });
+                return CreateInvalidRequestResult();
 
             var updateCommand = new UpdateValueCommand
             {
@@ -108,9 +109,11 @@ namespace expense.web.api.Controllers
             }
             else
             {
-                return BadRequest(new Dictionary<string, List<string>>() { { "Error", new List<string>() { result.Message } } });
+                return CreateBadRequestResult(result);
             }
         }
+
+        
 
         // DELETE api/values/5
         [HttpDelete("{id}")]

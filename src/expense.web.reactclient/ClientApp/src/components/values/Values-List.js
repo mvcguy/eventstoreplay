@@ -43,6 +43,16 @@ class ValuesList extends Component {
     }
 }
 
+
+function mapModelToTableRow(model) {
+    return (<tr key={model.id}>
+        <td><Link to={'/manage-value-record/' + model.id}>{model.code}</Link></td>
+        <td>{model.tenantId}</td>
+        <td>{model.name}</td>
+        <td>{model.value}</td>
+    </tr>);
+}
+
 function renderValuesTable(props) {
     return (
         <table className='table'>
@@ -55,14 +65,7 @@ function renderValuesTable(props) {
                 </tr>
             </thead>
             <tbody>
-                {props.valuesList.map(item =>
-                    <tr key={item.id}>
-                        <td><Link to={'/manage-value-record/' + item.id}>{item.code}</Link></td>
-                        <td>{item.tenantId}</td>
-                        <td>{item.name}</td>
-                        <td>{item.value}</td>
-                    </tr>
-                )}
+                {props.valuesList.map(item => mapModelToTableRow(item))}
             </tbody>
         </table>
     );

@@ -11,6 +11,6 @@ We will follow all the best practices available out there.
 
 The important thing here to maintain data consistancy/integrity through versioning of the aggregate. As this is a distributed system, and race conditions can arise any time, we will check if the client has passed the correct version while doing an update. If the version mismatch, the operation will be rejected.
 
-It is important to mention that we will be using one stream (we are using eventstore) for each aggregate instance. All the childs of the aggregate will write to this same stream. In this way we can use the EventStore built in transaction facility. If any of the event fails to comment, the whole batch of events will be rolled back.
+It is important to mention that we will be using one stream (we are using eventstore) for each aggregate instance. All the childs of the aggregate will write to this same stream. In this way we can use the EventStore built in transaction facility. If any of the event fails to commit, the whole batch of events will be rolled back.
 
 

@@ -155,7 +155,7 @@ namespace expense.web.api.Values.Aggregate
 
         #region ReconstructAggregate
 
-        // Notes: When we reconstruct aggregate from events, we don't want to set the applyflag to false,
+        // Notes: When we reconstruct aggregate from events, we don't want to set the applyEvent flag to false,
         // Its significant only when we want to persist and increment the version of aggregate
         // to achieve consistency!
 
@@ -177,19 +177,19 @@ namespace expense.web.api.Values.Aggregate
         public void Handle(NameChangedEvent @event)
         {
             CheckEvent(@event);
-            this.ChangeName(@event.Name);
+            this.ChangeName(@event.Name, applyEvent: false);
         }
 
         public void Handle(ValueChangedEvent @event)
         {
             CheckEvent(@event);
-            this.ChangeValue(@event.Value);
+            this.ChangeValue(@event.Value, applyEvent: false);
         }
 
         public void Handle(CodeChangedEvent @event)
         {
             CheckEvent(@event);
-            this.ChangeCode(@event.Code);
+            this.ChangeCode(@event.Code, applyEvent: false);
 
         }
 

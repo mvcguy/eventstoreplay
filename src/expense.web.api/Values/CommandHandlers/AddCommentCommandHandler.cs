@@ -46,7 +46,8 @@ namespace expense.web.api.Values.CommandHandlers
                     var comment = aggregate.AddComment(new ValueCommentAggregateChildDataModel
                     {
                         CommentText = command.CommentText,
-                        UserName = command.UserName
+                        UserName = command.UserName,
+                        TenantId = command.TenantId.GetValueOrDefault()
                     });
 
                     aggregate.Save();
