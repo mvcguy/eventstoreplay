@@ -30,7 +30,7 @@ namespace expense.web.eventstore.EventStoreSubscriber
                 try
                 {
                     var subscription = _eventStoreConnection.SubscribeToStreamFrom(Options.Value.TopicName,
-                        checkpoint == 0 ? null : checkpoint,
+                        checkpoint,
                         CatchUpSubscriptionSettings.Default,
                         HandleEvent,
                         Connected,

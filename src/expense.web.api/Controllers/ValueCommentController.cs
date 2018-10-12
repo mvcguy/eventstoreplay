@@ -70,21 +70,59 @@ namespace expense.web.api.Controllers
 
             var result = await _mediator.Send(command);
 
-            return result.Success 
-                ? Created($"~/api/valuecomment/{result.Model.ParentId}/{result.Model.Id}", ToViewModel(result.Model)) 
+            return result.Success
+                ? Created($"~/api/valuecomment/{result.Model.ParentId}/{result.Model.Id}", ToViewModel(result.Model))
+                : CreateBadRequestResult(result);
+        }
+
+        [HttpPut(template: "LikeCommentAction/{parentId}/{id}")]
+        public async Task<IActionResult> CommentLiked(Guid? parentId, Guid? id, [FromBody] CommentViewModel comment)
+        {
+
+            var command = new UpdateCommentCommand
+            {
+                ParentId = parentId.GetValueOrDefault(),
+                Id = id.GetValueOrDefault(),
+                ParentVersion = (comment.ParentVersion?.Value).GetValueOrDefault(),
+                CommentLikedChildCmd = new CommentLikedChildCmd()
+            };
+
+            var result = await _mediator.Send(command);
+
+            return result.Success
+                ? Ok(ToViewModel(result.Model))
+                : CreateBadRequestResult(result);
+        }
+
+        [HttpPut("DislikeCommentAction/{parentId}/{id}")]
+        public async Task<IActionResult> CommentDisliked(Guid? parentId, Guid? id, [FromBody] CommentViewModel comment)
+        {
+
+            var command = new UpdateCommentCommand
+            {
+                ParentId = parentId.GetValueOrDefault(),
+                Id = id.GetValueOrDefault(),
+                ParentVersion = (comment.ParentVersion?.Value).GetValueOrDefault(),
+                CommentDislikedChildCmd = new CommentDislikedChildCmd()
+            };
+
+            var result = await _mediator.Send(command);
+
+            return result.Success
+                ? Ok(ToViewModel(result.Model))
                 : CreateBadRequestResult(result);
         }
 
         // PUT: api/ValueComment/{parentID: GUID}/{commentID: GUID}
-        [HttpPut("{parentId}/{id}")]
+        [HttpPut("{parentId}/{id}", Order = 0)]
         public async Task<IActionResult> Put(Guid? parentId, Guid? id, [FromBody] CommentViewModel comment)
         {
             var command = new UpdateCommentCommand
             {
                 ParentId = parentId.GetValueOrDefault(),
                 Id = id.GetValueOrDefault(),
-                ParentVersion = comment.ParentVersion.Value.GetValueOrDefault(),
-                UpdateCommentTextCmd = new UpdateCommentTextChildCmd(comment.CommentText.Value)
+                ParentVersion = (comment.ParentVersion?.Value).GetValueOrDefault(),
+                UpdateCommentTextCmd = comment.CommentText != null ? new UpdateCommentTextChildCmd(comment.CommentText.Value) : null
             };
 
             var result = await _mediator.Send(command);

@@ -70,7 +70,9 @@ namespace expense.web.api
                 var eventSubscriber = provider.GetService<IEventStoreSubscriber>();
                 if (eventSubscriber.IsStarted) return;
 
-                eventSubscriber.Start(readPointer.Position + 1);
+                var position = readPointer.Position < 0 ? null : readPointer.Position;
+
+                eventSubscriber.Start(position);
             }
         }
     }

@@ -2,21 +2,7 @@ import React, { Component } from 'react';
 import { Form, FormGroup, FormControl, Button,  ControlLabel } from 'react-bootstrap';
 
 class ValueComment extends Component {
-    constructor(props, context) {
-        super(props, context);
-
-        // Just to show which props we needs. We can use a props library!
-        // this.props= {
-        //     name,
-        //     onCommentChange,
-        //     commentText,
-        //     errorclass,
-        //     errorMessage,
-        //     isLoading,
-        //     handleSaveComment
-        // };
-
-    }
+    
     render() {
         return (
             <div>

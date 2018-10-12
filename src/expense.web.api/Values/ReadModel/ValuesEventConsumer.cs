@@ -133,7 +133,7 @@ namespace expense.web.api.Values.ReadModel
 
         private void Handle(CommentDislikedEvent commentDislikedEvent, string eventDataJson, EventModel @event, EventMetaData eventMetaData)
         {
-            _logger.LogInformation($"Handling {nameof(CommentTextChangedEvent)} .... {Environment.NewLine} {eventDataJson}");
+            _logger.LogInformation($"Handling {nameof(CommentDislikedEvent)} .... {Environment.NewLine} {eventDataJson}");
 
             _operation = DatabaseOperation.Update;
             _currentValueRecord = GetRecord(commentDislikedEvent.ParentId);
@@ -150,7 +150,7 @@ namespace expense.web.api.Values.ReadModel
 
         private void Handle(CommentLikedEvent commentLikedEvent, string eventDataJson, EventModel @event, EventMetaData eventMetaData)
         {
-            _logger.LogInformation($"Handling {nameof(CommentTextChangedEvent)} .... {Environment.NewLine} {eventDataJson}");
+            _logger.LogInformation($"Handling {nameof(CommentLikedEvent)} .... {Environment.NewLine} {eventDataJson}");
 
             _operation = DatabaseOperation.Update;
             _currentValueRecord = GetRecord(commentLikedEvent.ParentId);
@@ -300,7 +300,17 @@ namespace expense.web.api.Values.ReadModel
         {
             _readPointer.Position = position;
             _readPointer.LastModifiedOn = DateTime.Now;
-            Task.Run(() => { _readPointerRepository.UpdateAsync(_readPointer, session); }).Wait();
+            Task.Run(() =>
+            {
+                try
+                {
+                    _readPointerRepository.UpdateAsync(_readPointer, session);
+                }
+                catch (Exception exception)
+                {
+                    _logger.LogError(exception.Message, exception);
+                } }).Wait();
+            _logger.LogInformation($"Read pointer updated ...{JsonConvert.SerializeObject(_readPointer)}");
         }
 
         private void UpdateCommonFields(EventModel @event, EventMetaData metaData)

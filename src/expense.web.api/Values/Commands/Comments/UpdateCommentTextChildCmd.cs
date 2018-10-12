@@ -14,4 +14,14 @@
             this.CommentText = commentText;
         }
     }
+
+    public class CommentLikedChildCmd
+    {
+
+    }
+
+    public class CommentDislikedChildCmd
+    {
+
+    }
 }

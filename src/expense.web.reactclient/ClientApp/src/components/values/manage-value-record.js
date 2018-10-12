@@ -15,7 +15,7 @@ import CommentList from './comment-list';
 class ManageValueRecord extends Component {
     constructor(props, context) {
         super(props, context);
-        console.log('constructor');
+
         this.updateValueRecordState = this.updateValueRecordState.bind(this);
         this.handleSaveValue = this.handleSaveValue.bind(this);
         this.getSuccessClassName = this.getSuccessClassName.bind(this);
@@ -23,6 +23,9 @@ class ManageValueRecord extends Component {
 
         // comments
         this.handleSaveComment = this.handleSaveComment.bind(this);
+        this.handleLikeComment = this.handleLikeComment.bind(this);
+        this.handleDislikeComment = this.handleDislikeComment.bind(this);
+
         this.onCommentChange = this.onCommentChange.bind(this);
 
         this.state = {
@@ -32,9 +35,7 @@ class ManageValueRecord extends Component {
             errorState: props.errorState,
             recordPersisted: props.recordPersisted,
             isDirty: props.isDirty,
-            currentComment: {
-                commentText: '',
-            },
+            currentComment: Object.assign({}, props.currentComment)
         };
     }
 
@@ -56,7 +57,6 @@ class ManageValueRecord extends Component {
     }
 
     componentWillReceiveProps(newProps) {
-        console.log('componentWillReceiveProps', newProps);
 
         var newState = {
             valueRecord: Object.assign({}, newProps.valueRecord),
@@ -64,7 +64,7 @@ class ManageValueRecord extends Component {
             hasError: newProps.hasError,
             errorState: newProps.errorState,
             recordPersisted: newProps.recordPersisted,
-            currentComment: newProps.currentComment,
+            currentComment: Object.assign({}, newProps.currentComment),
         };
 
         this.setState({
@@ -99,15 +99,14 @@ class ManageValueRecord extends Component {
     }
 
     componentWillMount() {
-        // when we are redirected with an id, fetch that record
-        console.log('componentwillmount')
+        // when we are redirected with an id, fetch that record     
         if (this.props.paramsRecordId) {
             this.props.getValueById(this.props.paramsRecordId, this.props.paramsVersion);
         }
     }
 
     componentWillUnmount() {
-        console.log('componentwillunmount');
+
         window.onbeforeunload = undefined
     }
 
@@ -117,12 +116,25 @@ class ManageValueRecord extends Component {
 
     // comments
     handleSaveComment(event) {
-        console.log('saving comment...')
-        this.props.addComment(this.state);
+        var comment = this.state.currentComment;
+        comment.parentVersion = this.state.valueRecord.version;
+        this.props.addComment(this.state.currentComment);
+    }
+
+    handleLikeComment(model) {
+        model.parentVersion = this.state.valueRecord.version;
+        this.props.respondComment(model, "like");
+    }
+
+    handleDislikeComment(model) {
+        model.parentVersion = this.state.valueRecord.version;
+        this.props.respondComment(model, "dislike");
     }
 
     onCommentChange(event) {
-        this.setState({ currentComment: { commentText: event.target.value } });
+        var newState = Object.assign({}, this.state.currentComment);
+        newState.commentText = event.target.value;
+        this.setState({ currentComment: newState });
     }
 
     render() {
@@ -230,31 +242,34 @@ class ManageValueRecord extends Component {
                         </Col>
                     </FormGroup>
                 </Form >
-                <ValueComment
-                    name="unique_id"
-                    onCommentChange={this.onCommentChange}
-                    commentText={this.state.currentComment.commentText}
-                    errorclass="hide error"
-                    errorMessage=""
-                    isLoading={this.props.isLoading}
-                    handleSaveComment={this.handleSaveComment}
-                />
-                <CommentList comments={this.props.valueRecord.comments} />
+                <div style={{ display: this.props.valueRecord.id ? "block" : "none" }}>
+                    <ValueComment
+                        name="unique_id"
+                        onCommentChange={this.onCommentChange}
+                        commentText={this.state.currentComment.commentText}
+                        errorclass="hide error"
+                        errorMessage=""
+                        isLoading={this.props.isLoading}
+                        handleSaveComment={this.handleSaveComment}
+                    />
+                    <CommentList
+                        comments={this.props.valueRecord.comments}
+                        handleLikeComment={this.handleLikeComment}
+                        handleDislikeComment={this.handleDislikeComment}
+                    />
+                </div>
+
             </div>
         );
     }
 }
 
 function mapStateToProps(state, ownProps) {
-
     var lifeValuesStore = state.lifeValues;
-
-    console.log('mapStateToProps', state);
-
     var paramsRecordId = ownProps.match.params.recordId;
     var paramsVersion = ownProps.match.params.version;
 
-    return {
+    var updatedProps = {
         isLoading: lifeValuesStore.isLoading,
         valueRecord: lifeValuesStore.valueRecord,
         hasError: lifeValuesStore.hasError,
@@ -263,8 +278,19 @@ function mapStateToProps(state, ownProps) {
         paramsRecordId: paramsRecordId,
         paramsVersion: paramsVersion,
         isDirty: false,
-        currentComment: lifeValuesStore.currentComment
-    }
+        currentComment: {
+            commentText: lifeValuesStore.currentComment.commentText,
+            likes: lifeValuesStore.currentComment.likes,
+            dislikes: lifeValuesStore.currentComment.dislikes,
+            tenantId: lifeValuesStore.valueRecord.tenantId,
+            parentVersion: lifeValuesStore.valueRecord.version,
+            parentId: lifeValuesStore.valueRecord.id,
+            id: null,
+        }
+    };
+
+    return updatedProps;
+
 }
 
 export default connect(mapStateToProps,

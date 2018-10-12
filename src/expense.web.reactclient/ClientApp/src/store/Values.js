@@ -14,6 +14,15 @@ const requestAddCommentType = 'REQUEST_ADD_COMMENT';
 const receiveAddCommentType = 'RECEIVE_ADD_COMMENT';
 const receiveAddCommentErrorType = 'RECEIVE_ADD_COMMENT_ERROR';
 
+
+const requestLikeCommentType = 'REQUEST_LIKE_COMMENT';
+const receiveLikeCommentType = 'RECEIVE_LIKE_COMMENT';
+const receiveLikeCommentErrorType = 'RECEIVE_LIKE_COMMENT_ERROR';
+
+const requestDislikeCommentType = 'REQUEST_DISLIKE_COMMENT';
+const receiveDislikeCommentType = 'RECEIVE_DISLIKE_COMMENT';
+const receiveDislikeCommentErrorType = 'RECEIVE_DISLIKE_COMMENT_ERROR';
+
 const cancelChangeType = 'CANCEL_CHANGES';
 const addNewRecordType = 'ADD_NEW_RECORD';
 
@@ -36,6 +45,12 @@ const initialState = {
     recordPersisted: false,
     currentComment: {
         commentText: '',
+        likes: 0,
+        dislikes: 0,
+        tenantId: 0,
+        parentVersion: 0,
+        parentId: null,
+        id: null,
     }
 };
 // const url = 'http://localhost:50178/api/values';
@@ -79,6 +94,16 @@ function toCommentUIModel(model) {
         userName: model.userName.value,
         likes: model.likes.value,
         dislikes: model.dislikes.value
+    };
+}
+
+function toCommentServerModel(model) {
+    return {
+        commentText: { value: model.commentText },
+        userName: { value: 'shahid.ali' },
+        tenantId: { value: model.tenantId },
+        parentId: model.parentId,
+        parentVersion: { value: model.parentVersion }
     };
 }
 
@@ -205,67 +230,74 @@ export const actionCreators = {
 
         return action;
     },
-    addComment: function (request) {
+    addComment: function (model) {
+
         var action = async function (dispatch, getState) {
-            dispatch({
-                type: requestAddCommentType,
-                hasError: false,
-                valueRecord: request.valueRecord,
-                currentComment: request.currentComment,
-            });
 
-            var parentId = request.valueRecord.id;
-            var parentVersion = request.valueRecord.version;
-            var comment = {
-                commentText: { value: request.currentComment.commentText },
-                userName: { value: 'shahid.ali' },
-                tenantId: { value: request.valueRecord.tenantId },
-                parentVersion: { value: parentVersion }
-            };
-            var newUrl = commentsUrl + '/' + parentId;
-
+            dispatch({ type: requestAddCommentType });
+            var newUrl = commentsUrl + '/' + model.parentId;
             fetch(newUrl, {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json; charset=utf-8",
                 },
-                body: JSON.stringify(comment)
+                body: JSON.stringify(toCommentServerModel(model))
 
             }).then(async (addCommentResponse) => {
                 var json = await addCommentResponse.json();
                 if (addCommentResponse.ok === true) {
-
-                    var currentRecord = request.valueRecord;
-
-                    // BUG: Do not modify the request, rather use a reducer to push comment to list
                     var commentUiModel = toCommentUIModel(json);
-                    currentRecord.version = commentUiModel.parentVersion;
-                    currentRecord.comments.push(commentUiModel);
-
-                    dispatch({
-                        type: receiveAddCommentType,
-                        currentComment: {},
-                        valueRecord: currentRecord,
-                        hasError: false,
-                        recordPersisted: true,
-                        errorState: {}
-                    })
+                    dispatch({ type: receiveAddCommentType, updatedComment: commentUiModel })
                 }
                 else {
-                    dispatch({
-                        type: receiveAddCommentErrorType,
-                        currentComment: request.currentComment,
-                        valueRecord: request.valueRecord,
-                        hasError: true,
-                        errorState: json
-                    })
+                    dispatch({ type: receiveAddCommentErrorType, errorState: json })
                 }
             }).catch((errorResponse) => {
                 dispatch({
                     type: receiveAddCommentErrorType,
-                    currentComment: request.currentComment,
-                    valueRecord: request.valueRecord,
-                    hasError: true,
+                    errorState: { "Error": ["An unexpected error occurred while processing your request, please try again later!"] }
+                });
+            });
+        };
+
+        return action;
+    },
+    respondComment: function (model, respondType) {
+        var action = async function (dispatch, getState) {
+
+            var reqType = requestLikeCommentType;
+            var recErrorType = receiveLikeCommentErrorType;
+            var recType = receiveLikeCommentType;
+
+            if (respondType === "dislike") {
+                reqType = requestDislikeCommentType;
+                recErrorType = receiveDislikeCommentErrorType;
+                recType = receiveDislikeCommentType;
+            }
+
+            var serAction = respondType==="dislike"?"/DislikeCommentAction/":"/LikeCommentAction/";
+
+            dispatch({ type: reqType });
+
+            var newUrl = commentsUrl + serAction + model.parentId + "/" + model.id;
+            fetch(newUrl, {
+                method: 'PUT',
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8",
+                },
+                body: JSON.stringify(toCommentServerModel(model))
+
+            }).then(async (addCommentResponse) => {
+                var json = await addCommentResponse.json();
+                if (addCommentResponse.ok === true) {
+                    dispatch({ type: recType, updatedComment: toCommentUIModel(json), })
+                }
+                else {
+                    dispatch({ type: recErrorType, errorState: json, })
+                }
+            }).catch((errorResponse) => {
+                dispatch({
+                    type: recErrorType,
                     errorState: { "Error": ["An unexpected error occurred while processing your request, please try again later!"] }
                 });
             });
@@ -286,21 +318,72 @@ export const reducer = (state = initialState, action) => {
         case requestCreateValueType:
         case requestValueByIdType:
         case requestAddCommentType:
+        case requestLikeCommentType:
+        case requestDislikeCommentType:
             newState.isLoading = true;
             newState.recordPersisted = false;
+            newState.hasError = false;
             break;
-        case receiveValuesType:
-        case receiveValuesErrorType:
+
         case receiveCreateValueType:
-        case receiveCreateValueErrorType:
+            newState.isLoading = false;
+            newState.recordPersisted = true;
+            newState.hasError = false;
+            break;
+
+        case receiveValuesType:
         case receiveValueByIdType:
-        case receiveValueByIdErrorType:
+            newState.isLoading = false;
+            newState.recordPersisted = false;
+            newState.hasError = false;
+            break;
+
+        case receiveAddCommentType:
+        case receiveLikeCommentType:
+        case receiveDislikeCommentType:
+            newState.isLoading = false;
+            newState.recordPersisted = false;
+            newState.hasError = false;
+            var xIndex = -1;
+
+            newState.valueRecord.comments.forEach((comment, index) => {
+                if (comment.id === newState.updatedComment.id) {
+                    xIndex = index;
+                    return;
+                }
+            });
+
+            // push the updated comment to the list
+            if (xIndex !== -1) {
+                newState.valueRecord.comments[xIndex] = newState.updatedComment;
+            }
+            else {
+                newState.valueRecord.comments.push(newState.updatedComment);
+            }
+
+            // update the parent version
+            newState.valueRecord.version = newState.updatedComment.parentVersion
+
+            break;
+
         case cancelChangeType:
         case addNewRecordType:
-        case receiveAddCommentType:
-        case receiveAddCommentErrorType:
             newState.isLoading = false;
+            newState.recordPersisted = false;
+            newState.hasError = false;
             break;
+
+        case receiveValuesErrorType:
+        case receiveCreateValueErrorType:
+        case receiveValueByIdErrorType:
+        case receiveAddCommentErrorType:
+        case receiveLikeCommentErrorType:
+        case receiveDislikeCommentErrorType:
+            newState.isLoading = false;
+            newState.recordPersisted = false;
+            newState.hasError = true;
+            break;
+
         default:
             newState = { ...state };
             break;

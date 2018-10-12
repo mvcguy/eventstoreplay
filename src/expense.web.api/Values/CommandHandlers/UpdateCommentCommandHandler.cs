@@ -46,7 +46,20 @@ namespace expense.web.api.Values.CommandHandlers
                     // a comment must exist before it can be updated!!!
                     var comment = aggregate.Comments.First(x => x.Id == command.Id && x.ParentId == command.ParentId);
 
-                    comment.ChangeCommentText(command.UpdateCommentTextCmd.CommentText);
+                    if (command.UpdateCommentTextCmd != null)
+                    {
+                        comment.ChangeCommentText(command.UpdateCommentTextCmd.CommentText);
+                    }
+
+                    if (command.CommentLikedChildCmd != null)
+                    {
+                        comment.CommentLiked();
+                    }
+
+                    if (command.CommentDislikedChildCmd != null)
+                    {
+                        comment.CommendDisliked();
+                    }
 
                     aggregate.Save();
                     result.Success = true;

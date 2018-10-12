@@ -38,8 +38,8 @@ namespace expense.web.api.Values.Aggregate
             _root = root;
             this.ParentId = root.Id;
             this.CommitId = root.CommitId;
-            this.Id = !id.HasValue || id.GetValueOrDefault() == default(Guid) 
-                ? Guid.NewGuid() 
+            this.Id = !id.HasValue || id.GetValueOrDefault() == default(Guid)
+                ? Guid.NewGuid()
                 : id.GetValueOrDefault();
             this.ParentVersion = root.Version;
         }
