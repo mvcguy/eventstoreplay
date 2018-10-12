@@ -10,9 +10,13 @@ class ValuesList extends Component {
     constructor(props, context) {
         super(props, context);
         this.addNewRecord = this.addNewRecord.bind(this);
+        this.gotoNext = this.gotoNext.bind(this);
+        this.gotoPrevious = this.gotoPrevious.bind(this);
+
+        this.state = { currentPage: 1 };
     }
     componentWillMount() {
-        this.props.getValuesList();
+        this.props.getValuesList(this.state.currentPage);
     }
 
     addNewRecord(e) {
@@ -20,6 +24,67 @@ class ValuesList extends Component {
         this.props.history.push('/manage-value-record');
     }
 
+    gotoNext(event) {
+        var gotoPage = this.state.currentPage + 1;
+        if (gotoPage > this.props.valuesList.totalPages) {
+            gotoPage = this.props.valuesList.totalPages;
+        }
+
+        this.setState({ currentPage: gotoPage });
+        this.props.getValuesList(gotoPage);
+    }
+
+    gotoPrevious(event) {
+        var gotoPage = this.state.currentPage - 1;
+        if (gotoPage < 0) {
+            gotoPage = 1;
+        }
+
+        this.setState({ currentPage: gotoPage });
+        this.props.getValuesList(gotoPage);
+    }
+
+    mapModelToTableRow(model) {
+        return (<tr key={model.id}>
+            <td><Link to={'/manage-value-record/' + model.id}>{model.code}</Link></td>
+            <td>{model.tenantId}</td>
+            <td>{model.name}</td>
+            <td>{model.value}</td>
+        </tr>);
+    }
+
+    renderValuesTable() {
+        return (
+            <table className='table'>
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Tenant ID</th>
+                        <th>Name</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {this.props.valuesList.list.map(item => this.mapModelToTableRow(item))}
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <Button bsStyle="link" onClick={this.gotoPrevious}
+                                disabled={this.state.currentPage === 1}>
+                                <span>{"<< Previous"}</span>
+                            </Button>
+                            <Button bsStyle="link" onClick={this.gotoNext}
+                                disabled={this.state.currentPage === this.props.valuesList.totalPages}>
+                                <span>{"Next >>"}</span>
+                            </Button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        );
+    }
 
     render() {
         return (
@@ -37,39 +102,13 @@ class ValuesList extends Component {
                 <div style={{ "display": this.props.hasError ? "block" : "none" }} >
                     <ValidationSummary errorState={this.props.errorState} />
                 </div>
-                {renderValuesTable(this.props)}
+                {this.renderValuesTable()}
             </div>
         );
     }
 }
 
 
-function mapModelToTableRow(model) {
-    return (<tr key={model.id}>
-        <td><Link to={'/manage-value-record/' + model.id}>{model.code}</Link></td>
-        <td>{model.tenantId}</td>
-        <td>{model.name}</td>
-        <td>{model.value}</td>
-    </tr>);
-}
-
-function renderValuesTable(props) {
-    return (
-        <table className='table'>
-            <thead>
-                <tr>
-                    <th>Code</th>
-                    <th>Tenant ID</th>
-                    <th>Name</th>
-                    <th>Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                {props.valuesList.map(item => mapModelToTableRow(item))}
-            </tbody>
-        </table>
-    );
-}
 
 export default connect(
     state => state.lifeValues,

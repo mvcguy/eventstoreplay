@@ -32,11 +32,22 @@ namespace expense.web.api.Controllers
 
         // GET api/values
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get(int pageNumber = 1)
         {
-            var records = await Task.Run(() => _readModelRepository.GetAll().ToList());
+            if (pageNumber < 1)
+                pageNumber = 1;
 
-            return Ok(records.Select(ToViewModel));
+            var totalPerPage = 5;
+
+            var take = totalPerPage;
+            var skip = (pageNumber - 1) * totalPerPage;
+
+            var count = await Task.Run(() => _readModelRepository.GetAll().Count());
+            var totalPages = Math.Ceiling(count / (double)totalPerPage);
+
+            var records = await Task.Run(() => _readModelRepository.GetAll().Skip(skip).Take(take).ToList().OrderByDescending(x => x.LastModifiedOn));
+
+            return Ok(new { valuesList = records.Select(ToViewModel), totalPages });
         }
 
         // GET api/values/17aeed42-3aa7-42a6-a01e-00de257dbb91/2
@@ -113,7 +124,7 @@ namespace expense.web.api.Controllers
             }
         }
 
-        
+
 
         // DELETE api/values/5
         [HttpDelete("{id}")]

@@ -27,7 +27,7 @@ const cancelChangeType = 'CANCEL_CHANGES';
 const addNewRecordType = 'ADD_NEW_RECORD';
 
 const initialState = {
-    valuesList: [],
+    valuesList: { list: [], totalPages: 0 },
     // TODO: Create unique flags/states for each action, 
     // otherwise it will be overwritten by another request
     isLoading: false,
@@ -108,23 +108,19 @@ function toCommentServerModel(model) {
 }
 
 export const actionCreators = {
-    getValuesList: () => async (dispatch, getState) => {
+    getValuesList: (pageNumber) => async (dispatch, getState) => {
 
-        dispatch({ type: requestValuesType, hasError: false });
+        dispatch({ type: requestValuesType });
 
-        fetch(url).then(async (response) => {
+        fetch(url + "?pageNumber=" + pageNumber).then(async (response) => {
             var list = await response.json();
             dispatch({
                 type: receiveValuesType,
-                valuesList: list.map((item) => toUiModel(item)),
-                hasError: false,
-                errorState: {}
+                valuesList: { list: list.valuesList.map((item) => toUiModel(item)), totalPages: list.totalPages },
             });
         }).catch((error) => {
             dispatch({
                 type: receiveValuesErrorType,
-                valuesList: [],
-                hasError: true,
                 errorState: { "Error": ["An unexpected error occurred while processing your request, please try again later!"] }
             })
         });
@@ -250,11 +246,12 @@ export const actionCreators = {
                     dispatch({ type: receiveAddCommentType, updatedComment: commentUiModel })
                 }
                 else {
-                    dispatch({ type: receiveAddCommentErrorType, errorState: json })
+                    dispatch({ type: receiveAddCommentErrorType, errorState: json, currentComment: model })
                 }
             }).catch((errorResponse) => {
                 dispatch({
                     type: receiveAddCommentErrorType,
+                    currentComment:model,
                     errorState: { "Error": ["An unexpected error occurred while processing your request, please try again later!"] }
                 });
             });
@@ -275,7 +272,7 @@ export const actionCreators = {
                 recType = receiveDislikeCommentType;
             }
 
-            var serAction = respondType==="dislike"?"/DislikeCommentAction/":"/LikeCommentAction/";
+            var serAction = respondType === "dislike" ? "/DislikeCommentAction/" : "/LikeCommentAction/";
 
             dispatch({ type: reqType });
 
